@@ -1,0 +1,86 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+*.jar
+*.war
+*.ear
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+.factorypath
+.springBeans
+
+# VS Code
+.vscode/
+.codeium/
+.windsurf/
+
+# Eclipse
+bin/
+*.classpath
+*.project
+*.metadata
+
+# NetBeans
+nbproject/
+nb-configuration.xml
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+log/
+logs/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+application-local.yml
+application-local.properties
+*.secret
+
+# Docker
+.docker/
+
+# Spring Boot
+*.pid
+heapdump.*
+
+# Temp files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Node (if any frontend modules end up in the project)
+node_modules/
+npm-debug.log*
+
+# Claude (AI assistant config - per-developer)
+.claude/
+.claude.json
+
+# Maven wrapper
+!mvnw
+!mvnw.cmd
+!mvnw.bat
+!.mvn/
