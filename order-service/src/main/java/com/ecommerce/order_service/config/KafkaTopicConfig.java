@@ -11,4 +11,9 @@ public class KafkaTopicConfig {
     public NewTopic orderConfirmedTopic() {
         return new NewTopic("order.confirmed", 1, (short) 1);
     }
+
+    @Bean
+    public NewTopic orderCancelledTopic() {
+        return new NewTopic("order.cancelled", 1, (short) 1);
+    }
 }

@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 public class OrderEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(OrderEventPublisher.class);
-    private static final String TOPIC = "order.confirmed";
+    private static final String CONFIRMED_TOPIC = "order.confirmed";
+    private static final String CANCELLED_TOPIC = "order.cancelled";
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -27,6 +28,14 @@ public class OrderEventPublisher {
     }
 
     public void publish(Order order) {
+        send(CONFIRMED_TOPIC, order);
+    }
+
+    public void publishCancelled(Order order) {
+        send(CANCELLED_TOPIC, order);
+    }
+
+    private void send(String topic, Order order) {
         OrderEvent event = OrderEvent.builder()
                 .orderId(order.getId())
                 .userId(order.getUserId())
@@ -37,7 +46,7 @@ public class OrderEventPublisher {
                 .build();
         try {
             String payload = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(TOPIC, String.valueOf(event.getOrderId()), payload)
+            kafkaTemplate.send(topic, String.valueOf(event.getOrderId()), payload)
                     .exceptionally(ex -> {
                         log.error("Failed to publish order event to Kafka for order {}", event.getOrderId(), ex);
                         return null;

@@ -95,6 +95,15 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
+        // Publish only after commit so a rolled-back cancel never emits a phantom
+        // order.cancelled event. Kafka send is fire-and-forget inside the callback.
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                orderEventPublisher.publishCancelled(order);
+            }
+        });
+
         // Best-effort external effects, failures swallowed — mirrors the Saga compensation.
         // Restock returns the confirmed units to the available pool (release is a no-op
         // post-confirm, since confirm already consumed both reserved and available).
