@@ -61,4 +61,17 @@ public class NotificationConsumer {
             log.error("Failed to process payment.refunded message: {}", payload, e);
         }
     }
+
+    @KafkaListener(topics = "order.cancelled")
+    public void consumeOrderCancelled(String payload) {
+        try {
+            OrderEvent event = objectMapper.readValue(payload, OrderEvent.class);
+            log.info("Received order.cancelled event: order={} user={} amount={}",
+                    event.getOrderId(), event.getUserId(), event.getAmount());
+            notificationService.createOrderCancelled(event);
+        } catch (Exception e) {
+            // Log and skip; an unparseable message must not poison the consumer loop.
+            log.error("Failed to process order.cancelled message: {}", payload, e);
+        }
+    }
 }

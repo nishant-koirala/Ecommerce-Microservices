@@ -60,6 +60,18 @@ public class NotificationService {
         return toResponse(notificationRepository.save(notification));
     }
 
+    @Transactional
+    public NotificationResponse createOrderCancelled(OrderEvent event) {
+        Notification notification = Notification.builder()
+                .userId(event.getUserId())
+                .orderId(event.getOrderId())
+                .paymentId(event.getPaymentId())
+                .message("Your order " + event.getOrderId() + " has been cancelled.")
+                .type(NotificationType.ORDER_CANCELLED)
+                .build();
+        return toResponse(notificationRepository.save(notification));
+    }
+
     @Transactional(readOnly = true)
     public NotificationResponse getById(Long id) {
         Notification notification = notificationRepository.findById(id)
