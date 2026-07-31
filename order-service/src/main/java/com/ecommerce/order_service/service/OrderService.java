@@ -8,16 +8,20 @@ import com.ecommerce.order_service.client.dto.CreatePaymentRequest;
 import com.ecommerce.order_service.client.dto.PaymentDto;
 import com.ecommerce.order_service.client.dto.ProductDto;
 import com.ecommerce.order_service.client.dto.ReserveRequest;
+import com.ecommerce.order_service.client.dto.UserDto;
 import com.ecommerce.order_service.dto.CreateOrderItemRequest;
 import com.ecommerce.order_service.dto.CreateOrderRequest;
 import com.ecommerce.order_service.dto.OrderItemResponse;
 import com.ecommerce.order_service.dto.OrderResponse;
+import com.ecommerce.order_service.exception.ForbiddenException;
 import com.ecommerce.order_service.exception.OrderProcessingException;
 import com.ecommerce.order_service.exception.ResourceNotFoundException;
 import com.ecommerce.order_service.model.Order;
 import com.ecommerce.order_service.model.OrderItem;
 import com.ecommerce.order_service.model.OrderStatus;
 import com.ecommerce.order_service.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,6 +38,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
     private final ProductServiceClient productServiceClient;
@@ -69,6 +75,43 @@ public class OrderService {
     public OrderResponse getOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+        return toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long id, String userEmail) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        UserDto owner = userServiceClient.getUserByEmail(userEmail);
+        if (owner == null || !owner.getId().equals(order.getUserId())) {
+            throw new ForbiddenException("You are not allowed to cancel this order");
+        }
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new OrderProcessingException(
+                    "Only CONFIRMED orders can be cancelled, order " + id + " is " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
+        // Best-effort external effects, failures swallowed — mirrors the Saga compensation.
+        // Restock returns the confirmed units to the available pool (release is a no-op
+        // post-confirm, since confirm already consumed both reserved and available).
+        for (OrderItem item : order.getItems()) {
+            try {
+                inventoryServiceClient.restockStock(new ReserveRequest(item.getProductId(), item.getQuantity()));
+            } catch (Exception e) {
+                log.error("Failed to restock product {} for cancelled order {}", item.getProductId(), id, e);
+            }
+        }
+        if (order.getPaymentId() != null) {
+            try {
+                paymentServiceClient.refundPayment(order.getPaymentId());
+            } catch (Exception e) {
+                log.error("Failed to refund payment {} for cancelled order {}", order.getPaymentId(), id, e);
+            }
+        }
         return toResponse(order);
     }
 

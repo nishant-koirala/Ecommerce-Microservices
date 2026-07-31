@@ -36,4 +36,10 @@ public class OrderController {
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(request));
     }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id,
+                                                     @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(orderService.cancelOrder(id, userEmail));
+    }
 }

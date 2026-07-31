@@ -10,4 +10,7 @@ public interface UserServiceClient {
 
     @GetMapping("/api/v1/users/{id}")
     UserDto getUserById(@PathVariable("id") Long id);
+
+    @GetMapping("/api/v1/users/email/{email}")
+    UserDto getUserByEmail(@PathVariable("email") String email);
 }

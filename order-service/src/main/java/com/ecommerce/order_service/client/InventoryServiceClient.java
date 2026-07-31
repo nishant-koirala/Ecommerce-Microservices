@@ -15,6 +15,9 @@ public interface InventoryServiceClient {
     @PostMapping("/api/v1/inventory/release")
     InventoryDto releaseStock(@RequestBody ReserveRequest request);
 
+    @PostMapping("/api/v1/inventory/restock")
+    InventoryDto restockStock(@RequestBody ReserveRequest request);
+
     @PostMapping("/api/v1/inventory/confirm")
     InventoryDto confirmStock(@RequestBody ReserveRequest request);
 }
