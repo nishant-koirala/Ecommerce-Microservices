@@ -27,7 +27,7 @@ public class GatewayConfig {
                 .add(serviceRoute("order_route", "http://localhost:8085",
                         GatewayRequestPredicates.path("/api/v1/orders/**")))
                 .add(serviceRoute("payment_route", "http://localhost:8086",
-                        GatewayRequestPredicates.path("/api/v1/payment/**")))
+                        GatewayRequestPredicates.path("/api/v1/payments/**")))
                 .add(serviceRoute("notification_route", "http://localhost:8087",
                         GatewayRequestPredicates.path("/api/v1/notification/**")))
                 .build();
