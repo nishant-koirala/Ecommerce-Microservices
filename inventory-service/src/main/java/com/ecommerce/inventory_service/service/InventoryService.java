@@ -75,6 +75,26 @@ public class InventoryService {
         backoff = @Backoff(delay = 100, multiplier = 2)
     )
     @Transactional
+    public InventoryResponse restock(ReserveStockRequest request) {
+        Inventory inventory = inventoryRepository.findByProductId(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("No inventory found for product id: " + request.getProductId()));
+
+        // Restock returns units to the pool: still-reserved units are unlocked (available
+        // already counts them), while the rest are units that were confirmed and must be
+        // added back to the available count.
+        int toReturn = request.getQuantity();
+        int releaseFromReserved = Math.min(toReturn, inventory.getQuantityReserved());
+        inventory.setQuantityReserved(inventory.getQuantityReserved() - releaseFromReserved);
+        inventory.setQuantityAvailable(inventory.getQuantityAvailable() + (toReturn - releaseFromReserved));
+        return toResponse(inventoryRepository.save(inventory));
+    }
+
+    @Retryable(
+        retryFor = ObjectOptimisticLockingFailureException.class,
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    @Transactional
     public InventoryResponse releaseStock(ReserveStockRequest request) {
         Inventory inventory = inventoryRepository.findByProductId(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("No inventory found for product id: " + request.getProductId()));

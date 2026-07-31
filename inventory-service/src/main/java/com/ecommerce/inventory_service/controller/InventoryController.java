@@ -41,6 +41,11 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.releaseStock(request));
     }
 
+    @PostMapping("/restock")
+    public ResponseEntity<InventoryResponse> restock(@Valid @RequestBody ReserveStockRequest request) {
+        return ResponseEntity.ok(inventoryService.restock(request));
+    }
+
     @PostMapping("/confirm")
     public ResponseEntity<InventoryResponse> confirmDeduction(@Valid @RequestBody ReserveStockRequest request) {
         return ResponseEntity.ok(inventoryService.confirmDeduction(request));
