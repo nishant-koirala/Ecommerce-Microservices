@@ -72,6 +72,15 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderResponse> getAllOrders(String userRole) {
+        if (!"ADMIN".equals(userRole)) {
+            throw new ForbiddenException("ADMIN role required to list all orders");
+        }
+        return orderRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     public OrderResponse getOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
