@@ -2,6 +2,7 @@ package com.ecommerce.order_service.service;
 
 import com.ecommerce.order_service.client.InventoryServiceClient;
 import com.ecommerce.order_service.client.ProductServiceClient;
+import com.ecommerce.order_service.client.UserServiceClient;
 import com.ecommerce.order_service.client.dto.ProductDto;
 import com.ecommerce.order_service.client.dto.ReserveRequest;
 import com.ecommerce.order_service.dto.CreateOrderItemRequest;
@@ -29,14 +30,17 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductServiceClient productServiceClient;
     private final InventoryServiceClient inventoryServiceClient;
+    private final UserServiceClient userServiceClient;
 
     @Autowired
     public OrderService(OrderRepository orderRepository,
                         ProductServiceClient productServiceClient,
-                        InventoryServiceClient inventoryServiceClient) {
+                        InventoryServiceClient inventoryServiceClient,
+                        UserServiceClient userServiceClient) {
         this.orderRepository = orderRepository;
         this.productServiceClient = productServiceClient;
         this.inventoryServiceClient = inventoryServiceClient;
+        this.userServiceClient = userServiceClient;
     }
 
     public List<OrderResponse> getOrdersByUserId(Long userId) {
@@ -53,6 +57,12 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
+        try {
+            userServiceClient.getUserById(request.getUserId());
+        } catch (Exception e) {
+            throw new OrderProcessingException("User not found or unavailable: " + request.getUserId());
+        }
+
         List<OrderItem> reservedItems = new ArrayList<>();
         List<ReserveRequest> successfulReservations = new ArrayList<>();
 
