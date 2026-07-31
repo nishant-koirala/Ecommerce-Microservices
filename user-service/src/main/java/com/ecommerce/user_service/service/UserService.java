@@ -60,7 +60,7 @@ public class UserService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
         return LoginResponse.builder()
                 .token(token)

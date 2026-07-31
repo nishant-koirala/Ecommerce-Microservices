@@ -1,5 +1,6 @@
 package com.ecommerce.user_service.security;
 
+import com.ecommerce.user_service.model.Role;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -17,9 +18,10 @@ public class JwtUtil {
 
     private final long expirationMs = 86400000; // 24 hours
 
-    public String generateToken(String email) {
+    public String generateToken(String email, Role role) {
         return Jwts.builder()
                 .subject(email)
+                .claim("role", role.name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(secretKey)
