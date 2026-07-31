@@ -49,4 +49,16 @@ public class OrderController {
                                                      @RequestHeader("X-User-Email") String userEmail) {
         return ResponseEntity.ok(orderService.cancelOrder(id, userEmail));
     }
+
+    @PostMapping("/{id}/ship")
+    public ResponseEntity<OrderResponse> shipOrder(@PathVariable Long id,
+                                                   @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        return ResponseEntity.ok(orderService.shipOrder(id, userRole));
+    }
+
+    @PostMapping("/{id}/deliver")
+    public ResponseEntity<OrderResponse> deliverOrder(@PathVariable Long id,
+                                                      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        return ResponseEntity.ok(orderService.deliverOrder(id, userRole));
+    }
 }

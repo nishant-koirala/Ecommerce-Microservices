@@ -143,6 +143,54 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderResponse shipOrder(Long id, String userRole) {
+        if (!"ADMIN".equals(userRole)) {
+            throw new ForbiddenException("ADMIN role required to ship orders");
+        }
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new OrderProcessingException(
+                    "Only CONFIRMED orders can be shipped, order " + id + " is " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.SHIPPED);
+        orderRepository.save(order);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                orderEventPublisher.publishShipped(order);
+            }
+        });
+        return toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse deliverOrder(Long id, String userRole) {
+        if (!"ADMIN".equals(userRole)) {
+            throw new ForbiddenException("ADMIN role required to deliver orders");
+        }
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+        if (order.getStatus() != OrderStatus.SHIPPED) {
+            throw new OrderProcessingException(
+                    "Only SHIPPED orders can be delivered, order " + id + " is " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                orderEventPublisher.publishDelivered(order);
+            }
+        });
+        return toResponse(order);
+    }
+
+    @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
         try {
             userServiceClient.getUserById(request.getUserId());

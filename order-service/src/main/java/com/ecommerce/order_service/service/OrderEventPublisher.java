@@ -17,6 +17,8 @@ public class OrderEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(OrderEventPublisher.class);
     private static final String CONFIRMED_TOPIC = "order.confirmed";
     private static final String CANCELLED_TOPIC = "order.cancelled";
+    private static final String SHIPPED_TOPIC = "order.shipped";
+    private static final String DELIVERED_TOPIC = "order.delivered";
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -33,6 +35,14 @@ public class OrderEventPublisher {
 
     public void publishCancelled(Order order) {
         send(CANCELLED_TOPIC, order);
+    }
+
+    public void publishShipped(Order order) {
+        send(SHIPPED_TOPIC, order);
+    }
+
+    public void publishDelivered(Order order) {
+        send(DELIVERED_TOPIC, order);
     }
 
     private void send(String topic, Order order) {
