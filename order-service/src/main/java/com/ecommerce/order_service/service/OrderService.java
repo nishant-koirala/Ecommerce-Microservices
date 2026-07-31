@@ -17,12 +17,15 @@ import com.ecommerce.order_service.exception.ForbiddenException;
 import com.ecommerce.order_service.exception.OrderProcessingException;
 import com.ecommerce.order_service.exception.ResourceNotFoundException;
 import com.ecommerce.order_service.model.Order;
+import com.ecommerce.order_service.model.OrderIdempotency;
 import com.ecommerce.order_service.model.OrderItem;
 import com.ecommerce.order_service.model.OrderStatus;
+import com.ecommerce.order_service.repository.OrderIdempotencyRepository;
 import com.ecommerce.order_service.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -42,15 +45,18 @@ public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
+    private final OrderIdempotencyRepository idempotencyRepository;
     private final ProductServiceClient productServiceClient;
     private final InventoryServiceClient inventoryServiceClient;
     private final UserServiceClient userServiceClient;
     private final PaymentServiceClient paymentServiceClient;
     private final PlatformTransactionManager transactionManager;
     private final OrderEventPublisher orderEventPublisher;
+    private final TransactionTemplate idempotencyTxTemplate;
 
     @Autowired
     public OrderService(OrderRepository orderRepository,
+                        OrderIdempotencyRepository idempotencyRepository,
                         ProductServiceClient productServiceClient,
                         InventoryServiceClient inventoryServiceClient,
                         UserServiceClient userServiceClient,
@@ -58,12 +64,15 @@ public class OrderService {
                         PlatformTransactionManager transactionManager,
                         OrderEventPublisher orderEventPublisher) {
         this.orderRepository = orderRepository;
+        this.idempotencyRepository = idempotencyRepository;
         this.productServiceClient = productServiceClient;
         this.inventoryServiceClient = inventoryServiceClient;
         this.userServiceClient = userServiceClient;
         this.paymentServiceClient = paymentServiceClient;
         this.transactionManager = transactionManager;
         this.orderEventPublisher = orderEventPublisher;
+        this.idempotencyTxTemplate = new TransactionTemplate(transactionManager);
+        this.idempotencyTxTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     public List<OrderResponse> getOrdersByUserId(Long userId) {
@@ -134,11 +143,58 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
         try {
             userServiceClient.getUserById(request.getUserId());
         } catch (Exception e) {
             throw new OrderProcessingException("User not found or unavailable: " + request.getUserId());
+        }
+
+        Long userId = request.getUserId();
+        String key = idempotencyKey == null ? null : idempotencyKey.trim();
+        boolean hasKey = key != null && !key.isEmpty();
+
+        // Replay: a key already mapped to a completed order returns the original order
+        // instead of re-running the saga (no double reserve / double charge).
+        if (hasKey) {
+            OrderIdempotency existing = idempotencyRepository.findByUserIdAndIdempotencyKey(userId, key)
+                    .orElse(null);
+            if (existing != null) {
+                if (existing.getOrderId() == null) {
+                    throw new OrderProcessingException(
+                            "Order creation with this key is still in progress, retry shortly");
+                }
+                return orderRepository.findById(existing.getOrderId())
+                        .map(this::toResponse)
+                        .orElseThrow(() -> new OrderProcessingException("Order for idempotency key not found"));
+            }
+        }
+
+        // Enforced here (not via @NotEmpty) so a keyed replay whose cart was already
+        // cleared can carry an empty items list into the replay lookup above.
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new OrderProcessingException("Order must contain at least one item");
+        }
+
+        // Claim the key in its own REQUIRES_NEW tx: a concurrent same-key insert either
+        // fails fast on the unique index (the loser returns the winner's order, never
+        // running the saga) or succeeds when the winner's tx rolled back. A violation
+        // here must not poison the outer saga transaction.
+        OrderIdempotency claim = null;
+        if (hasKey) {
+            try {
+                claim = idempotencyTxTemplate.execute(status -> idempotencyRepository.saveAndFlush(
+                        OrderIdempotency.builder().userId(userId).idempotencyKey(key).build()));
+            } catch (DataIntegrityViolationException e) {
+                OrderIdempotency winner = idempotencyRepository.findByUserIdAndIdempotencyKey(userId, key)
+                        .orElseThrow(() -> new OrderProcessingException("Concurrent order creation, retry shortly"));
+                if (winner.getOrderId() == null) {
+                    throw new OrderProcessingException("Order creation still in progress, retry shortly");
+                }
+                return orderRepository.findById(winner.getOrderId())
+                        .map(this::toResponse)
+                        .orElseThrow(() -> new OrderProcessingException("Order for idempotency key not found"));
+            }
         }
 
         List<OrderItem> reservedItems = new ArrayList<>();
@@ -182,6 +238,11 @@ public class OrderService {
             }
         } catch (OrderProcessingException e) {
             releaseAll(successfulReservations);
+            if (claim != null) {
+                Long claimId = claim.getId();
+                idempotencyTxTemplate.executeWithoutResult(
+                        status -> idempotencyRepository.deleteById(claimId));
+            }
             throw e;
         }
 
@@ -207,6 +268,18 @@ public class OrderService {
             }
             savedOrder.setStatus(OrderStatus.CONFIRMED);
             OrderResponse response = toResponse(orderRepository.save(savedOrder));
+
+            // Link the key to the order in the same transaction, so the mapping commits
+            // atomically with the CONFIRMED order and a replay returns this order.
+            if (claim != null) {
+                Long claimId = claim.getId();
+                idempotencyRepository.findById(claimId)
+                        .ifPresent(c -> {
+                            c.setOrderId(savedOrder.getId());
+                            idempotencyRepository.save(c);
+                        });
+            }
+
             // Publish only after commit so a rolled-back order never emits a phantom
             // order.confirmed event. Kafka send is fire-and-forget inside the callback.
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -228,6 +301,13 @@ public class OrderService {
             releaseAll(successfulReservations);
             persistFailedOrder(request.getUserId(), totalAmount,
                     payment != null ? payment.getId() : null, reservedItems);
+            // Free the key so a retry can re-run the saga; the rollback of this method's
+            // main transaction would otherwise leave the claim (orderId null) in place.
+            if (claim != null) {
+                Long claimId = claim.getId();
+                idempotencyTxTemplate.executeWithoutResult(
+                        status -> idempotencyRepository.deleteById(claimId));
+            }
             throw new OrderProcessingException("Payment processing failed: " + e.getMessage());
         }
     }
