@@ -22,6 +22,20 @@ class JwtAuthenticationFilterTest {
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     private String token(String subject) {
+        return token(subject, "USER");
+    }
+
+    private String token(String subject, String role) {
+        return Jwts.builder()
+                .subject(subject)
+                .claim("role", role)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(key)
+                .compact();
+    }
+
+    private String tokenNoRole(String subject) {
         return Jwts.builder()
                 .subject(subject)
                 .issuedAt(new Date())
@@ -86,5 +100,48 @@ class JwtAuthenticationFilterTest {
     void authLoginPassesWithoutToken() throws Exception {
         MockHttpServletResponse response = run("POST", "/api/v1/auth/login", null);
         assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void userCannotWriteProducts() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/products",
+                "Bearer " + token("user@example.com"));
+        assertEquals(403, response.getStatus());
+        assertTrue(response.getContentAsString().contains("\"status\":403"));
+    }
+
+    @Test
+    void adminCanWriteProducts() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/products",
+                "Bearer " + token("admin@example.com", "ADMIN"));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void userCannotWriteCategories() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/categories",
+                "Bearer " + token("user@example.com"));
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void userCannotWriteInventory() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/inventory",
+                "Bearer " + token("user@example.com"));
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void userCanPlaceOrder() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/orders",
+                "Bearer " + token("user@example.com"));
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void tokenWithoutRoleOnAdminPathReturns403() throws Exception {
+        MockHttpServletResponse response = run("POST", "/api/v1/products",
+                "Bearer " + tokenNoRole("legacy@example.com"));
+        assertEquals(403, response.getStatus());
     }
 }

@@ -56,7 +56,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        String role = jwtUtil.extractRole(token);
+        if (requiresAdmin(path, request.getMethod()) && !"ADMIN".equals(role)) {
+            writeForbidden(response);
+            return;
+        }
+
         filterChain.doFilter(new XUserEmailRequestWrapper(request, email), response);
+    }
+
+    private boolean requiresAdmin(String path, String method) {
+        if (!isWrite(method)) {
+            return false;
+        }
+        return PATH_MATCHER.match("/api/v1/products/**", path)
+                || PATH_MATCHER.match("/api/v1/categories/**", path)
+                || PATH_MATCHER.match("/api/v1/inventory/**", path);
+    }
+
+    private boolean isWrite(String method) {
+        return "POST".equals(method) || "PUT".equals(method)
+                || "DELETE".equals(method) || "PATCH".equals(method);
     }
 
     private boolean isPublic(String path, String method) {
@@ -86,5 +106,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getWriter(),
                 Map.of("status", 401, "message", message, "timestamp", LocalDateTime.now().toString()));
+    }
+
+    private void writeForbidden(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getWriter(),
+                Map.of("status", 403, "message", "Insufficient privileges: ADMIN role required",
+                        "timestamp", LocalDateTime.now().toString()));
     }
 }

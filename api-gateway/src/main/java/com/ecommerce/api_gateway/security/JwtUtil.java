@@ -27,4 +27,17 @@ public class JwtUtil {
             return null;
         }
     }
+
+    public String extractRole(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("role", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
