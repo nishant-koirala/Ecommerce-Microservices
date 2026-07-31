@@ -2,6 +2,7 @@ package com.ecommerce.payment_service.controller;
 
 import com.ecommerce.payment_service.dto.CreatePaymentRequest;
 import com.ecommerce.payment_service.dto.PaymentResponse;
+import com.ecommerce.payment_service.service.PaymentEventPublisher;
 import com.ecommerce.payment_service.service.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,15 +15,19 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Autowired
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, PaymentEventPublisher paymentEventPublisher) {
         this.paymentService = paymentService;
+        this.paymentEventPublisher = paymentEventPublisher;
     }
 
     @PostMapping
     public ResponseEntity<PaymentResponse> processPayment(@Valid @RequestBody CreatePaymentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.processPayment(request));
+        PaymentResponse payment = paymentService.processPayment(request);
+        paymentEventPublisher.publish(payment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
 
     @GetMapping("/{id}")
