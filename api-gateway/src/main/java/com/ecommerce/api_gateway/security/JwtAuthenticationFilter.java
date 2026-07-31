@@ -17,6 +17,7 @@ import java.util.Map;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String X_USER_EMAIL_HEADER = "X-User-Email";
+    public static final String X_USER_ROLE_HEADER = "X-User-Role";
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
     private static final String BEARER_PREFIX = "Bearer ";
@@ -62,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        filterChain.doFilter(new XUserEmailRequestWrapper(request, email), response);
+        filterChain.doFilter(new XUserEmailRequestWrapper(request, email, role), response);
     }
 
     private boolean requiresAdmin(String path, String method) {

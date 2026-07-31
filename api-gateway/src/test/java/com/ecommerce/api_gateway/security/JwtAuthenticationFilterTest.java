@@ -144,4 +144,40 @@ class JwtAuthenticationFilterTest {
                 "Bearer " + tokenNoRole("legacy@example.com"));
         assertEquals(403, response.getStatus());
     }
+
+    @Test
+    void validTokenInjectsXUserRole() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users");
+        request.addHeader("Authorization", "Bearer " + token("admin@example.com", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter().doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        HttpServletRequest forwarded = (HttpServletRequest) chain.getRequest();
+        assertEquals("ADMIN", forwarded.getHeader("X-User-Role"));
+    }
+
+    @Test
+    void defaultUserTokenInjectsUserRole() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users");
+        request.addHeader("Authorization", "Bearer " + token("user@example.com"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter().doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        HttpServletRequest forwarded = (HttpServletRequest) chain.getRequest();
+        assertEquals("USER", forwarded.getHeader("X-User-Role"));
+    }
+
+    @Test
+    void tokenWithoutRoleLeavesXUserRoleAbsent() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/users");
+        request.addHeader("Authorization", "Bearer " + tokenNoRole("legacy@example.com"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter().doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        HttpServletRequest forwarded = (HttpServletRequest) chain.getRequest();
+        assertNull(forwarded.getHeader("X-User-Role"));
+    }
 }
