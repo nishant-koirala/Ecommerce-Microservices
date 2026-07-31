@@ -1,25 +1,23 @@
-package com.ecommerce.order_service.dto;
+package com.ecommerce.order_service.client.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class OrderResponse {
+public class PaymentDto {
 
     private Long id;
+    private Long orderId;
     private Long userId;
+    private BigDecimal amount;
     private String status;
-    private BigDecimal totalAmount;
-    private Long paymentId;
-    private List<OrderItemResponse> items;
+    private LocalDateTime createdAt;
 }

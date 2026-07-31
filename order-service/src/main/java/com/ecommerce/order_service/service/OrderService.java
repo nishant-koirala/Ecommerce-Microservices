@@ -1,8 +1,11 @@
 package com.ecommerce.order_service.service;
 
 import com.ecommerce.order_service.client.InventoryServiceClient;
+import com.ecommerce.order_service.client.PaymentServiceClient;
 import com.ecommerce.order_service.client.ProductServiceClient;
 import com.ecommerce.order_service.client.UserServiceClient;
+import com.ecommerce.order_service.client.dto.CreatePaymentRequest;
+import com.ecommerce.order_service.client.dto.PaymentDto;
 import com.ecommerce.order_service.client.dto.ProductDto;
 import com.ecommerce.order_service.client.dto.ReserveRequest;
 import com.ecommerce.order_service.dto.CreateOrderItemRequest;
@@ -17,7 +20,10 @@ import com.ecommerce.order_service.model.OrderStatus;
 import com.ecommerce.order_service.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -31,16 +37,22 @@ public class OrderService {
     private final ProductServiceClient productServiceClient;
     private final InventoryServiceClient inventoryServiceClient;
     private final UserServiceClient userServiceClient;
+    private final PaymentServiceClient paymentServiceClient;
+    private final PlatformTransactionManager transactionManager;
 
     @Autowired
     public OrderService(OrderRepository orderRepository,
                         ProductServiceClient productServiceClient,
                         InventoryServiceClient inventoryServiceClient,
-                        UserServiceClient userServiceClient) {
+                        UserServiceClient userServiceClient,
+                        PaymentServiceClient paymentServiceClient,
+                        PlatformTransactionManager transactionManager) {
         this.orderRepository = orderRepository;
         this.productServiceClient = productServiceClient;
         this.inventoryServiceClient = inventoryServiceClient;
         this.userServiceClient = userServiceClient;
+        this.paymentServiceClient = paymentServiceClient;
+        this.transactionManager = transactionManager;
     }
 
     public List<OrderResponse> getOrdersByUserId(Long userId) {
@@ -66,8 +78,9 @@ public class OrderService {
         List<OrderItem> reservedItems = new ArrayList<>();
         List<ReserveRequest> successfulReservations = new ArrayList<>();
 
+        BigDecimal totalAmount;
         try {
-            BigDecimal totalAmount = BigDecimal.ZERO;
+            totalAmount = BigDecimal.ZERO;
 
             for (CreateOrderItemRequest itemRequest : request.getItems()) {
                 ProductDto product;
@@ -101,31 +114,83 @@ public class OrderService {
                 totalAmount = totalAmount.add(
                     product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
             }
-
-            Order order = Order.builder()
-                    .userId(request.getUserId())
-                    .status(OrderStatus.CONFIRMED)
-                    .totalAmount(totalAmount)
-                    .build();
-
-            for (OrderItem item : reservedItems) {
-                order.addItem(item);
-            }
-
-            Order savedOrder = orderRepository.save(order);
-            return toResponse(savedOrder);
-
         } catch (OrderProcessingException e) {
+            releaseAll(successfulReservations);
+            throw e;
+        }
+
+        Order order = Order.builder()
+                .userId(request.getUserId())
+                .status(OrderStatus.PENDING)
+                .totalAmount(totalAmount)
+                .build();
+
+        for (OrderItem item : reservedItems) {
+            order.addItem(item);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+
+        PaymentDto payment = null;
+        try {
+            payment = paymentServiceClient.processPayment(new CreatePaymentRequest(
+                    savedOrder.getId(), request.getUserId(), totalAmount));
+            savedOrder.setPaymentId(payment.getId());
             for (ReserveRequest successfulReservation : successfulReservations) {
+                inventoryServiceClient.confirmStock(successfulReservation);
+            }
+            savedOrder.setStatus(OrderStatus.CONFIRMED);
+            return toResponse(orderRepository.save(savedOrder));
+        } catch (Exception e) {
+            if (payment != null) {
                 try {
-                    inventoryServiceClient.releaseStock(successfulReservation);
-                } catch (Exception rollbackException) {
-                    // In production, this would be logged to an error tracking system
-                    // and potentially queued for manual review, since a failed rollback
-                    // means stock is stuck as "reserved" incorrectly.
+                    paymentServiceClient.refundPayment(payment.getId());
+                } catch (Exception refundException) {
+                    // Swallowed: a failed refund leaves the payment visible for manual review,
+                    // mirroring the failed reservation-release fallback below.
                 }
             }
-            throw e;
+            releaseAll(successfulReservations);
+            persistFailedOrder(request.getUserId(), totalAmount,
+                    payment != null ? payment.getId() : null, reservedItems);
+            throw new OrderProcessingException("Payment processing failed: " + e.getMessage());
+        }
+    }
+
+    private void persistFailedOrder(Long userId, BigDecimal totalAmount, Long paymentId,
+                                    List<OrderItem> items) {
+        // Runs in a separate transaction so the PAYMENT_FAILED record survives the
+        // rollback triggered when createOrder rethrows the RuntimeException below.
+        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
+        txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        txTemplate.executeWithoutResult(status -> {
+            Order failedOrder = Order.builder()
+                    .userId(userId)
+                    .status(OrderStatus.PAYMENT_FAILED)
+                    .totalAmount(totalAmount)
+                    .paymentId(paymentId)
+                    .build();
+            for (OrderItem item : items) {
+                failedOrder.addItem(OrderItem.builder()
+                        .productId(item.getProductId())
+                        .productName(item.getProductName())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .build());
+            }
+            orderRepository.save(failedOrder);
+        });
+    }
+
+    private void releaseAll(List<ReserveRequest> successfulReservations) {
+        for (ReserveRequest successfulReservation : successfulReservations) {
+            try {
+                inventoryServiceClient.releaseStock(successfulReservation);
+            } catch (Exception rollbackException) {
+                // In production, this would be logged to an error tracking system
+                // and potentially queued for manual review, since a failed rollback
+                // means stock is stuck as "reserved" incorrectly.
+            }
         }
     }
 
@@ -139,6 +204,7 @@ public class OrderService {
                 .userId(order.getUserId())
                 .status(order.getStatus().name())
                 .totalAmount(order.getTotalAmount())
+                .paymentId(order.getPaymentId())
                 .items(itemResponses)
                 .build();
     }
