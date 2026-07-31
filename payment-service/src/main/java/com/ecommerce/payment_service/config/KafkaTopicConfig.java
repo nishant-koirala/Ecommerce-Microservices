@@ -11,4 +11,9 @@ public class KafkaTopicConfig {
     public NewTopic paymentCompletedTopic() {
         return new NewTopic("payment.completed", 1, (short) 1);
     }
+
+    @Bean
+    public NewTopic paymentRefundedTopic() {
+        return new NewTopic("payment.refunded", 1, (short) 1);
+    }
 }

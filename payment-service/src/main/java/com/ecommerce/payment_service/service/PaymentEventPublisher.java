@@ -16,6 +16,7 @@ public class PaymentEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentEventPublisher.class);
     private static final String TOPIC = "payment.completed";
+    private static final String REFUND_TOPIC = "payment.refunded";
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -27,6 +28,14 @@ public class PaymentEventPublisher {
     }
 
     public void publish(PaymentResponse payment) {
+        send(TOPIC, payment);
+    }
+
+    public void publishRefunded(PaymentResponse payment) {
+        send(REFUND_TOPIC, payment);
+    }
+
+    private void send(String topic, PaymentResponse payment) {
         PaymentEvent event = PaymentEvent.builder()
                 .paymentId(payment.getId())
                 .orderId(payment.getOrderId())
@@ -37,7 +46,7 @@ public class PaymentEventPublisher {
                 .build();
         try {
             String payload = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(TOPIC, String.valueOf(event.getOrderId()), payload)
+            kafkaTemplate.send(topic, String.valueOf(event.getOrderId()), payload)
                     .exceptionally(ex -> {
                         log.error("Failed to publish payment event to Kafka for payment {}", event.getPaymentId(), ex);
                         return null;
