@@ -1,5 +1,6 @@
 package com.ecommerce.notification_service.service;
 
+import com.ecommerce.notification_service.event.OrderEvent;
 import com.ecommerce.notification_service.event.PaymentEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,32 @@ public class NotificationConsumer {
         } catch (Exception e) {
             // Log and skip; an unparseable message must not poison the consumer loop.
             log.error("Failed to process payment.completed message: {}", payload, e);
+        }
+    }
+
+    @KafkaListener(topics = "order.confirmed")
+    public void consumeOrderConfirmed(String payload) {
+        try {
+            OrderEvent event = objectMapper.readValue(payload, OrderEvent.class);
+            log.info("Received order.confirmed event: order={} user={} amount={}",
+                    event.getOrderId(), event.getUserId(), event.getAmount());
+            notificationService.createOrderConfirmed(event);
+        } catch (Exception e) {
+            // Log and skip; an unparseable message must not poison the consumer loop.
+            log.error("Failed to process order.confirmed message: {}", payload, e);
+        }
+    }
+
+    @KafkaListener(topics = "payment.refunded")
+    public void consumePaymentRefunded(String payload) {
+        try {
+            PaymentEvent event = objectMapper.readValue(payload, PaymentEvent.class);
+            log.info("Received payment.refunded event: payment={} order={} user={} amount={}",
+                    event.getPaymentId(), event.getOrderId(), event.getUserId(), event.getAmount());
+            notificationService.createRefunded(event);
+        } catch (Exception e) {
+            // Log and skip; an unparseable message must not poison the consumer loop.
+            log.error("Failed to process payment.refunded message: {}", payload, e);
         }
     }
 }

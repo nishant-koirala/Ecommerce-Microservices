@@ -1,6 +1,7 @@
 package com.ecommerce.notification_service.service;
 
 import com.ecommerce.notification_service.dto.NotificationResponse;
+import com.ecommerce.notification_service.event.OrderEvent;
 import com.ecommerce.notification_service.event.PaymentEvent;
 import com.ecommerce.notification_service.exception.ResourceNotFoundException;
 import com.ecommerce.notification_service.model.Notification;
@@ -31,6 +32,30 @@ public class NotificationService {
                 .paymentId(event.getPaymentId())
                 .message("Payment of " + event.getAmount() + " for order " + event.getOrderId() + " was successful.")
                 .type(NotificationType.PAYMENT_SUCCESS)
+                .build();
+        return toResponse(notificationRepository.save(notification));
+    }
+
+    @Transactional
+    public NotificationResponse createOrderConfirmed(OrderEvent event) {
+        Notification notification = Notification.builder()
+                .userId(event.getUserId())
+                .orderId(event.getOrderId())
+                .paymentId(event.getPaymentId())
+                .message("Your order " + event.getOrderId() + " has been confirmed.")
+                .type(NotificationType.ORDER_CONFIRMED)
+                .build();
+        return toResponse(notificationRepository.save(notification));
+    }
+
+    @Transactional
+    public NotificationResponse createRefunded(PaymentEvent event) {
+        Notification notification = Notification.builder()
+                .userId(event.getUserId())
+                .orderId(event.getOrderId())
+                .paymentId(event.getPaymentId())
+                .message("Payment of " + event.getAmount() + " for order " + event.getOrderId() + " was refunded.")
+                .type(NotificationType.PAYMENT_REFUNDED)
                 .build();
         return toResponse(notificationRepository.save(notification));
     }
