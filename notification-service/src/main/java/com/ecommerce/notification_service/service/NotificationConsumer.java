@@ -74,4 +74,30 @@ public class NotificationConsumer {
             log.error("Failed to process order.cancelled message: {}", payload, e);
         }
     }
+
+    @KafkaListener(topics = "order.shipped")
+    public void consumeOrderShipped(String payload) {
+        try {
+            OrderEvent event = objectMapper.readValue(payload, OrderEvent.class);
+            log.info("Received order.shipped event: order={} user={} amount={}",
+                    event.getOrderId(), event.getUserId(), event.getAmount());
+            notificationService.createOrderShipped(event);
+        } catch (Exception e) {
+            // Log and skip; an unparseable message must not poison the consumer loop.
+            log.error("Failed to process order.shipped message: {}", payload, e);
+        }
+    }
+
+    @KafkaListener(topics = "order.delivered")
+    public void consumeOrderDelivered(String payload) {
+        try {
+            OrderEvent event = objectMapper.readValue(payload, OrderEvent.class);
+            log.info("Received order.delivered event: order={} user={} amount={}",
+                    event.getOrderId(), event.getUserId(), event.getAmount());
+            notificationService.createOrderDelivered(event);
+        } catch (Exception e) {
+            // Log and skip; an unparseable message must not poison the consumer loop.
+            log.error("Failed to process order.delivered message: {}", payload, e);
+        }
+    }
 }

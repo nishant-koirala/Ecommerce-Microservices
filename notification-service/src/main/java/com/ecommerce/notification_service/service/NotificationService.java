@@ -72,6 +72,30 @@ public class NotificationService {
         return toResponse(notificationRepository.save(notification));
     }
 
+    @Transactional
+    public NotificationResponse createOrderShipped(OrderEvent event) {
+        Notification notification = Notification.builder()
+                .userId(event.getUserId())
+                .orderId(event.getOrderId())
+                .paymentId(event.getPaymentId())
+                .message("Your order " + event.getOrderId() + " has been shipped.")
+                .type(NotificationType.ORDER_SHIPPED)
+                .build();
+        return toResponse(notificationRepository.save(notification));
+    }
+
+    @Transactional
+    public NotificationResponse createOrderDelivered(OrderEvent event) {
+        Notification notification = Notification.builder()
+                .userId(event.getUserId())
+                .orderId(event.getOrderId())
+                .paymentId(event.getPaymentId())
+                .message("Your order " + event.getOrderId() + " has been delivered.")
+                .type(NotificationType.ORDER_DELIVERED)
+                .build();
+        return toResponse(notificationRepository.save(notification));
+    }
+
     @Transactional(readOnly = true)
     public NotificationResponse getById(Long id) {
         Notification notification = notificationRepository.findById(id)
