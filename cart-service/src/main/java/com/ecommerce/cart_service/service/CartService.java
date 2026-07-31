@@ -1,13 +1,24 @@
 package com.ecommerce.cart_service.service;
 
+import com.ecommerce.cart_service.client.OrderServiceClient;
+import com.ecommerce.cart_service.client.UserServiceClient;
+import com.ecommerce.cart_service.client.dto.CreateOrderItemRequest;
+import com.ecommerce.cart_service.client.dto.CreateOrderRequest;
+import com.ecommerce.cart_service.client.dto.OrderResponse;
+import com.ecommerce.cart_service.client.dto.UserDto;
 import com.ecommerce.cart_service.dto.AddToCartRequest;
 import com.ecommerce.cart_service.dto.CartItemResponse;
+import com.ecommerce.cart_service.dto.CheckoutResponse;
 import com.ecommerce.cart_service.dto.UpdateQuantityRequest;
+import com.ecommerce.cart_service.exception.CartEmptyException;
+import com.ecommerce.cart_service.exception.ForbiddenException;
 import com.ecommerce.cart_service.exception.ResourceNotFoundException;
 import com.ecommerce.cart_service.model.CartItem;
 import com.ecommerce.cart_service.repository.CartItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,10 +28,19 @@ import java.util.stream.Collectors;
 public class CartService {
 
     private final CartItemRepository cartItemRepository;
+    private final UserServiceClient userServiceClient;
+    private final OrderServiceClient orderServiceClient;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
-    public CartService(CartItemRepository cartItemRepository) {
+    public CartService(CartItemRepository cartItemRepository,
+                       UserServiceClient userServiceClient,
+                       OrderServiceClient orderServiceClient,
+                       PlatformTransactionManager transactionManager) {
         this.cartItemRepository = cartItemRepository;
+        this.userServiceClient = userServiceClient;
+        this.orderServiceClient = orderServiceClient;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     public List<CartItemResponse> getCartByUserId(Long userId) {
@@ -64,6 +84,44 @@ public class CartService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                     "Cart item not found for user id: " + userId + " and product id: " + productId));
         cartItemRepository.delete(cartItem);
+    }
+
+    public CheckoutResponse checkout(Long userId, String userEmail) {
+        UserDto owner;
+        try {
+            owner = userServiceClient.getUserByEmail(userEmail);
+        } catch (Exception e) {
+            throw new ForbiddenException("Unable to verify cart owner");
+        }
+        if (owner == null || !owner.getId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to checkout this cart");
+        }
+
+        List<CartItem> items = cartItemRepository.findByUserId(userId);
+        if (items.isEmpty()) {
+            throw new CartEmptyException("Cart is empty for user id: " + userId);
+        }
+
+        CreateOrderRequest request = CreateOrderRequest.builder()
+                .userId(userId)
+                .items(items.stream()
+                        .map(item -> CreateOrderItemRequest.builder()
+                                .productId(item.getProductId())
+                                .quantity(item.getQuantity())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
+
+        OrderResponse order = orderServiceClient.createOrder(request);
+        // Clear the cart in its own short transaction; the external createOrder call above
+        // stays outside any DB transaction (holding a connection across HTTP is an anti-pattern).
+        transactionTemplate.executeWithoutResult(status -> cartItemRepository.deleteByUserId(userId));
+
+        return CheckoutResponse.builder()
+                .orderId(order.getId())
+                .status(order.getStatus())
+                .totalAmount(order.getTotalAmount())
+                .build();
     }
 
     private CartItemResponse toResponse(CartItem cartItem) {

@@ -2,6 +2,7 @@ package com.ecommerce.cart_service.controller;
 
 import com.ecommerce.cart_service.dto.AddToCartRequest;
 import com.ecommerce.cart_service.dto.CartItemResponse;
+import com.ecommerce.cart_service.dto.CheckoutResponse;
 import com.ecommerce.cart_service.dto.UpdateQuantityRequest;
 import com.ecommerce.cart_service.service.CartService;
 import jakarta.validation.Valid;
@@ -31,6 +32,12 @@ public class CartController {
     @PostMapping
     public ResponseEntity<CartItemResponse> addToCart(@Valid @RequestBody AddToCartRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addToCart(request));
+    }
+
+    @PostMapping("/{userId}/checkout")
+    public ResponseEntity<CheckoutResponse> checkout(@PathVariable Long userId,
+                                                     @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(cartService.checkout(userId, userEmail));
     }
 
     @PutMapping("/{userId}/{productId}")
