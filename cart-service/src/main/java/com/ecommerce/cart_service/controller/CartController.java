@@ -36,8 +36,9 @@ public class CartController {
 
     @PostMapping("/{userId}/checkout")
     public ResponseEntity<CheckoutResponse> checkout(@PathVariable Long userId,
-                                                     @RequestHeader("X-User-Email") String userEmail) {
-        return ResponseEntity.ok(cartService.checkout(userId, userEmail));
+                                                     @RequestHeader("X-User-Email") String userEmail,
+                                                     @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return ResponseEntity.ok(cartService.checkout(userId, userEmail, idempotencyKey));
     }
 
     @PutMapping("/{userId}/{productId}")

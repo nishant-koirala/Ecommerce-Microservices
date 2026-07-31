@@ -86,7 +86,7 @@ public class CartService {
         cartItemRepository.delete(cartItem);
     }
 
-    public CheckoutResponse checkout(Long userId, String userEmail) {
+    public CheckoutResponse checkout(Long userId, String userEmail, String idempotencyKey) {
         UserDto owner;
         try {
             owner = userServiceClient.getUserByEmail(userEmail);
@@ -98,7 +98,8 @@ public class CartService {
         }
 
         List<CartItem> items = cartItemRepository.findByUserId(userId);
-        if (items.isEmpty()) {
+        boolean hasKey = idempotencyKey != null && !idempotencyKey.isBlank();
+        if (items.isEmpty() && !hasKey) {
             throw new CartEmptyException("Cart is empty for user id: " + userId);
         }
 
@@ -112,10 +113,13 @@ public class CartService {
                         .collect(Collectors.toList()))
                 .build();
 
-        OrderResponse order = orderServiceClient.createOrder(request);
+        OrderResponse order = orderServiceClient.createOrder(request, hasKey ? idempotencyKey.trim() : null);
         // Clear the cart in its own short transaction; the external createOrder call above
         // stays outside any DB transaction (holding a connection across HTTP is an anti-pattern).
-        transactionTemplate.executeWithoutResult(status -> cartItemRepository.deleteByUserId(userId));
+        // Skip clearing when items were already empty (replay with key).
+        if (!items.isEmpty()) {
+            transactionTemplate.executeWithoutResult(status -> cartItemRepository.deleteByUserId(userId));
+        }
 
         return CheckoutResponse.builder()
                 .orderId(order.getId())
