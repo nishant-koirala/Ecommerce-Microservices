@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -115,13 +115,50 @@ import { ThemeService } from '../../../core/services/theme.service';
           </a>
 
           @if (auth.isAuthenticated()) {
-            <a
-              routerLink="/auth/login"
-              class="hidden max-w-28 truncate rounded-full px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800 sm:block"
-              [title]="auth.displayName()"
-            >
-              {{ auth.displayName() }}
-            </a>
+            <div class="relative hidden sm:block">
+              @if (menuOpen()) {
+                <button
+                  type="button"
+                  (click)="menuOpen.set(false)"
+                  class="fixed inset-0 z-40 cursor-default"
+                  aria-label="Close user menu"
+                ></button>
+              }
+              <button
+                type="button"
+                (click)="menuOpen.set(!menuOpen())"
+                class="relative z-50 flex items-center gap-2 rounded-full px-2 py-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                [attr.aria-expanded]="menuOpen()"
+              >
+                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-semibold text-white dark:bg-primary-500">
+                  {{ initials() }}
+                </span>
+                <span class="hidden max-w-28 truncate text-sm font-medium text-neutral-700 dark:text-neutral-200 lg:inline">
+                  {{ auth.displayName() }}
+                </span>
+                <svg viewBox="0 0 20 20" fill="currentColor" class="hidden size-3.5 text-neutral-400 lg:block" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06z" clip-rule="evenodd"/>
+                </svg>
+              </button>
+              @if (menuOpen()) {
+                <div class="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-neutral-200 bg-white p-2 shadow-soft dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-card-dark">
+                  <div class="border-b border-neutral-200 px-3 pb-3 pt-2 dark:border-neutral-800">
+                    <p class="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-50">{{ auth.displayName() }}</p>
+                    <p class="truncate text-xs text-neutral-500 dark:text-neutral-400">{{ auth.currentUser()?.email }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="signOut()"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-red-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-7.5A2.25 2.25 0 0 0 3.75 5.25v9.5A2.25 2.25 0 0 0 6 17h7.5a2.25 2.25 0 0 0 2.25-2.25V11m3 0-3-3m0 0-3 3m3-3V17" />
+                    </svg>
+                    Sign out
+                  </button>
+                </div>
+              }
+            </div>
           } @else {
             <a
               routerLink="/auth/login"
@@ -178,6 +215,23 @@ import { ThemeService } from '../../../core/services/theme.service';
             >
               Cart @if (cart.count() > 0) { ({{ cart.count() }}) }
             </a>
+            @if (auth.isAuthenticated()) {
+              <button
+                type="button"
+                (click)="signOut()"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                Sign out
+              </button>
+            } @else {
+              <a
+                routerLink="/auth/login"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                Sign in
+              </a>
+            }
           </div>
         </div>
       }
@@ -191,6 +245,22 @@ export class NavbarComponent {
   private readonly router = inject(Router);
 
   protected readonly mobileOpen = signal(false);
+  protected readonly menuOpen = signal(false);
+
+  readonly initials = computed(() => {
+    const user = this.auth.currentUser();
+    if (!user) {
+      return '';
+    }
+    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  });
+
+  signOut(): void {
+    this.menuOpen.set(false);
+    this.mobileOpen.set(false);
+    this.auth.logout();
+    this.router.navigate(['/']);
+  }
 
   onSearchSubmit(query: string, event: Event): void {
     event.preventDefault();
