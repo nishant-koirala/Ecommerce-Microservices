@@ -17,6 +17,13 @@ spring:
       hibernate:
         format_sql: true
 
+app:
+  admin:
+    email: admin@atelier.dev
+    password: admin123456
+    firstName: Store
+    lastName: Admin
+
 management:
   endpoints:
     web:
