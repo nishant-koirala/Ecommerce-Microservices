@@ -7,8 +7,10 @@ import { ShippingAddress } from '../../core/models/checkout';
 import { OrderItemResponse, OrderResponse, OrderStatus } from '../../core/models/order';
 import { ImageService } from '../../core/services/image.service';
 import { OrderService } from '../../core/services/order.service';
+import { ToastService } from '../../core/services/toast.service';
 import { formatPrice } from '../../core/utils/format';
 import { BadgeComponent, BadgeTone } from '../../shared/components/badge/badge.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { LinkButtonComponent } from '../../shared/components/button/link-button.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 
@@ -21,10 +23,17 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
   DELIVERED: 'success',
 };
 
+const ORDER_STEPS = [
+  { key: 'PENDING', label: 'Placed' },
+  { key: 'CONFIRMED', label: 'Confirmed' },
+  { key: 'SHIPPED', label: 'Shipped' },
+  { key: 'DELIVERED', label: 'Delivered' },
+] as const;
+
 @Component({
   selector: 'app-order-confirmation',
   standalone: true,
-  imports: [RouterLink, BadgeComponent, LinkButtonComponent, SkeletonComponent],
+  imports: [RouterLink, BadgeComponent, ButtonComponent, LinkButtonComponent, SkeletonComponent],
   template: `
     <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       @if (loading()) {
@@ -69,6 +78,39 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
             </p>
           </div>
         </div>
+
+        <!-- Status timeline -->
+        @if (isTerminal(order.status)) {
+          <div class="mt-8 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/60 dark:bg-red-950/40">
+            <span class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-sm font-bold text-red-600 dark:bg-red-900/50 dark:text-red-400">!</span>
+            <p class="text-sm text-red-700 dark:text-red-300">{{ terminalMessage(order.status) }}</p>
+          </div>
+        } @else {
+          <ol class="mt-8 flex items-center" aria-label="Order status">
+            @for (step of orderSteps; track step.key; let i = $index) {
+              <li class="flex flex-1 items-center last:flex-none">
+                <span class="flex items-center gap-2.5">
+                  <span
+                    class="flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                    [class]="stepDotClass(i)"
+                  >
+                    @if (i < statusIndex()) {
+                      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l4.1 4.1 6.8-6.8a1 1 0 0 1 1.1 0z" clip-rule="evenodd"/>
+                      </svg>
+                    } @else {
+                      {{ i + 1 }}
+                    }
+                  </span>
+                  <span class="text-sm font-medium" [class]="stepLabelClass(i)">{{ step.label }}</span>
+                </span>
+                @if (!$last) {
+                  <span class="mx-3 h-0.5 flex-1 rounded-full" [class]="stepConnectorClass(i)"></span>
+                }
+              </li>
+            }
+          </ol>
+        }
 
         <div class="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
           <!-- Items -->
@@ -131,8 +173,15 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
             <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
               <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">What's next</h2>
               <p class="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-                Your order is being prepared. You'll receive shipping updates as it makes its way to you.
+                {{ nextStepText() }}
               </p>
+              @if (order.status === 'CONFIRMED') {
+                <div class="mt-5">
+                  <app-button variant="outline" [fullWidth]="true" [busy]="cancelling()" (click)="cancelOrder()">
+                    {{ confirmCancel() ? 'Confirm cancel' : 'Cancel order' }}
+                  </app-button>
+                </div>
+              }
               <div class="mt-5">
                 <app-link-button routerLink="/products" [fullWidth]="true">Continue shopping</app-link-button>
               </div>
@@ -149,6 +198,7 @@ export class OrderConfirmationComponent implements OnInit {
   private readonly ordersService = inject(OrderService);
   private readonly imageService = inject(ImageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   readonly loading = signal(true);
   readonly orderSignal = signal<OrderResponse | null>(null);
@@ -160,6 +210,35 @@ export class OrderConfirmationComponent implements OnInit {
   readonly shipping = computed(() =>
     this.orderSignal() ? this.orderSignal()!.totalAmount - this.subtotal() : 0,
   );
+
+  readonly orderSteps = ORDER_STEPS;
+
+  readonly cancelling = signal(false);
+  readonly confirmCancel = signal(false);
+
+  readonly statusIndex = computed(() => {
+    const status = this.orderSignal()?.status;
+    return status ? ORDER_STEPS.findIndex((s) => s.key === status) : -1;
+  });
+
+  readonly nextStepText = computed(() => {
+    switch (this.orderSignal()?.status) {
+      case 'PENDING':
+        return "Payment is being processed. We'll confirm your order shortly.";
+      case 'CONFIRMED':
+        return "We're preparing your order. It will be shipped soon — you can cancel any time before it ships.";
+      case 'SHIPPED':
+        return 'Your order is on the way. You can track its progress above.';
+      case 'DELIVERED':
+        return 'Your order has been delivered. Enjoy your purchase!';
+      case 'CANCELLED':
+        return 'This order was cancelled.';
+      case 'PAYMENT_FAILED':
+        return 'Payment failed for this order. Please contact support if you were charged.';
+      default:
+        return 'Thank you for your purchase.';
+    }
+  });
 
   formatPrice = formatPrice;
 
@@ -191,6 +270,56 @@ export class OrderConfirmationComponent implements OnInit {
 
   statusTone(status: OrderStatus): BadgeTone {
     return STATUS_TONE[status] ?? 'neutral';
+  }
+
+  isTerminal(status: OrderStatus): boolean {
+    return status === 'CANCELLED' || status === 'PAYMENT_FAILED';
+  }
+
+  terminalMessage(status: OrderStatus): string {
+    return status === 'PAYMENT_FAILED'
+      ? 'Payment failed for this order. Please contact support if you were charged.'
+      : 'This order was cancelled.';
+  }
+
+  stepDotClass(i: number): string {
+    if (i < this.statusIndex()) return 'bg-emerald-500 text-white';
+    if (i === this.statusIndex()) return 'bg-primary-600 text-white dark:bg-primary-500';
+    return 'border border-neutral-300 bg-white text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-400';
+  }
+
+  stepLabelClass(i: number): string {
+    if (i < this.statusIndex()) return 'text-emerald-600 dark:text-emerald-400';
+    if (i === this.statusIndex()) return 'font-semibold text-neutral-900 dark:text-neutral-50';
+    return 'text-neutral-500 dark:text-neutral-400';
+  }
+
+  stepConnectorClass(i: number): string {
+    return i < this.statusIndex() ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-neutral-800';
+  }
+
+  cancelOrder(): void {
+    const order = this.orderSignal();
+    if (!order || order.status !== 'CONFIRMED' || this.cancelling()) {
+      return;
+    }
+    if (!this.confirmCancel()) {
+      this.confirmCancel.set(true);
+      return;
+    }
+    this.cancelling.set(true);
+    this.ordersService.cancel(order.id).pipe(take(1)).subscribe({
+      next: (updated) => {
+        this.orderSignal.set(updated);
+        this.cancelling.set(false);
+        this.confirmCancel.set(false);
+        this.toast.success('Order cancelled');
+      },
+      error: () => {
+        this.cancelling.set(false);
+        this.confirmCancel.set(false);
+      },
+    });
   }
 
   image(item: OrderItemResponse): string {

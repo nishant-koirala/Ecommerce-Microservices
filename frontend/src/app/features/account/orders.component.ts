@@ -7,8 +7,10 @@ import { OrderItemResponse, OrderResponse, OrderStatus } from '../../core/models
 import { AuthService } from '../../core/services/auth.service';
 import { ImageService } from '../../core/services/image.service';
 import { OrderService } from '../../core/services/order.service';
+import { ToastService } from '../../core/services/toast.service';
 import { formatDate, formatPrice } from '../../core/utils/format';
 import { BadgeComponent, BadgeTone } from '../../shared/components/badge/badge.component';
+import { ButtonComponent } from '../../shared/components/button/button.component';
 import { LinkButtonComponent } from '../../shared/components/button/link-button.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 
@@ -24,7 +26,7 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [RouterLink, BadgeComponent, LinkButtonComponent, SkeletonComponent],
+  imports: [RouterLink, BadgeComponent, ButtonComponent, LinkButtonComponent, SkeletonComponent],
   template: `
     <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <nav class="mb-8 text-sm text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
@@ -56,32 +58,39 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
       } @else {
         <ul class="mt-8 space-y-4">
           @for (order of orders(); track order.id) {
-            <li>
-              <a
-                [routerLink]="['/orders', order.id]"
-                class="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 transition-colors hover:border-primary-400 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-primary-600"
-              >
-                <div class="flex min-w-0 items-center gap-4">
-                  @if (order.items.length > 0) {
-                    <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
-                      <img [src]="image(order.items[0])" [alt]="order.items[0].productName" class="size-12 object-cover" />
-                    </span>
-                  }
-                  <div class="min-w-0">
-                    <p class="truncate font-medium text-neutral-900 dark:text-neutral-50">Order #{{ order.id }}</p>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                      {{ formatDate(order.createdAt) }} · {{ order.items.length }}
-                      {{ order.items.length === 1 ? 'item' : 'items' }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex shrink-0 items-center gap-3">
-                  <app-badge [tone]="statusTone(order.status)">{{ order.status }}</app-badge>
-                  <span class="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                    {{ formatPrice(order.totalAmount) }}
+            <li class="group flex items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+              <a [routerLink]="['/orders', order.id]" class="flex min-w-0 flex-1 items-center gap-4">
+                @if (order.items.length > 0) {
+                  <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                    <img [src]="image(order.items[0])" [alt]="order.items[0].productName" class="size-12 object-cover" />
                   </span>
+                }
+                <div class="min-w-0">
+                  <p class="truncate font-medium text-neutral-900 transition-colors group-hover:text-primary-700 dark:text-neutral-50 dark:group-hover:text-primary-300">
+                    Order #{{ order.id }}
+                  </p>
+                  <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ formatDate(order.createdAt) }} · {{ order.items.length }}
+                    {{ order.items.length === 1 ? 'item' : 'items' }}
+                  </p>
                 </div>
               </a>
+              <div class="flex shrink-0 items-center gap-3">
+                <app-badge [tone]="statusTone(order.status)">{{ order.status }}</app-badge>
+                <span class="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-50">
+                  {{ formatPrice(order.totalAmount) }}
+                </span>
+                @if (order.status === 'CONFIRMED') {
+                  <app-button
+                    size="sm"
+                    variant="outline"
+                    [busy]="cancellingId() === order.id"
+                    (click)="cancelOrder(order)"
+                  >
+                    {{ confirmingId() === order.id ? 'Confirm cancel' : 'Cancel' }}
+                  </app-button>
+                }
+              </div>
             </li>
           }
         </ul>
@@ -93,10 +102,13 @@ export class OrdersComponent implements OnInit {
   private readonly ordersService = inject(OrderService);
   private readonly auth = inject(AuthService);
   private readonly imageService = inject(ImageService);
+  private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loading = signal(true);
   readonly orders = signal<OrderResponse[]>([]);
+  readonly confirmingId = signal<number | null>(null);
+  readonly cancellingId = signal<number | null>(null);
 
   formatPrice = formatPrice;
   formatDate = formatDate;
@@ -123,6 +135,32 @@ export class OrdersComponent implements OnInit {
 
   statusTone(status: OrderStatus): BadgeTone {
     return STATUS_TONE[status] ?? 'neutral';
+  }
+
+  cancelOrder(order: OrderResponse): void {
+    if (this.cancellingId() !== null) {
+      return;
+    }
+    if (this.confirmingId() !== order.id) {
+      this.confirmingId.set(order.id);
+      return;
+    }
+    this.cancellingId.set(order.id);
+    this.ordersService
+      .cancel(order.id)
+      .pipe(takeUntilDestroyed(this.destroyRef), take(1))
+      .subscribe({
+        next: (updated) => {
+          this.orders.update((list) => list.map((o) => (o.id === updated.id ? updated : o)));
+          this.cancellingId.set(null);
+          this.confirmingId.set(null);
+          this.toast.success('Order cancelled');
+        },
+        error: () => {
+          this.cancellingId.set(null);
+          this.confirmingId.set(null);
+        },
+      });
   }
 
   image(item: OrderItemResponse): string {
