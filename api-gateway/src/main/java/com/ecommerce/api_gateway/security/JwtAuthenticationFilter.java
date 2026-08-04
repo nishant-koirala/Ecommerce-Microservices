@@ -81,6 +81,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isPublic(String path, String method) {
+        if ("OPTIONS".equals(method)) {
+            return true;
+        }
         if ("POST".equals(method)) {
             if (PATH_MATCHER.match("/api/v1/auth/**", path)) {
                 return true;

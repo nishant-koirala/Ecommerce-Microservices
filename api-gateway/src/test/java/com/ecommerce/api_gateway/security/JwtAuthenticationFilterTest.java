@@ -97,6 +97,12 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void preflightOptionsPassesWithoutToken() throws Exception {
+        MockHttpServletResponse response = run("OPTIONS", "/api/v1/orders", null);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
     void authLoginPassesWithoutToken() throws Exception {
         MockHttpServletResponse response = run("POST", "/api/v1/auth/login", null);
         assertEquals(200, response.getStatus());
