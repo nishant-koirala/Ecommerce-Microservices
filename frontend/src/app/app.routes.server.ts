@@ -30,6 +30,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    path: 'account/notifications',
+    renderMode: RenderMode.Client
+  },
+  {
     path: 'admin',
     renderMode: RenderMode.Client
   },

@@ -167,6 +167,16 @@ import { ThemeService } from '../../../core/services/theme.service';
                     </svg>
                     My orders
                   </a>
+                  <a
+                    routerLink="/account/notifications"
+                    (click)="menuOpen.set(false)"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 8.5A4.857 4.857 0 0 0 10 3.643 4.857 4.857 0 0 0 5.143 8.5v2.143c0 .858-.286 1.687-.813 2.357h11.34a4.2 4.2 0 0 1-.813-2.357V8.5zM8.5 16.5a1.5 1.5 0 0 0 3 0" />
+                    </svg>
+                    Notifications
+                  </a>
                   @if (auth.isAdmin()) {
                     <a
                       routerLink="/admin/orders"
@@ -262,6 +272,13 @@ import { ThemeService } from '../../../core/services/theme.service';
                 class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
               >
                 My orders
+              </a>
+              <a
+                routerLink="/account/notifications"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                Notifications
               </a>
               @if (auth.isAdmin()) {
                 <a
