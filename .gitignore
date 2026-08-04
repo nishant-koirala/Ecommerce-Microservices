@@ -79,6 +79,10 @@ npm-debug.log*
 .claude/
 .claude.json
 
+# Tracking files (auto-maintained work docs - not for commit)
+PROJECT_FILES.md
+WORK_LOG.md
+
 # Maven wrapper
 !mvnw
 !mvnw.cmd
