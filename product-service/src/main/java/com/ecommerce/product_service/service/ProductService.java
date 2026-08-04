@@ -59,6 +59,7 @@ public class ProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .sku(request.getSku())
+                .imageUrl(request.getImageUrl())
                 .category(category)
                 .build();
 
@@ -79,6 +80,7 @@ public class ProductService {
                 .description(product.getDescription())
                 .price(product.getPrice())
                 .sku(product.getSku())
+                .imageUrl(product.getImageUrl())
                 .category(categoryResponse)
                 .build();
     }

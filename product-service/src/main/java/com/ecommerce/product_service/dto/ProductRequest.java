@@ -28,6 +28,8 @@ public class ProductRequest {
     @NotBlank(message = "SKU is required")
     private String sku;
 
+    private String imageUrl;
+
     @NotNull(message = "Category ID is required")
     private Long categoryId;
 }
