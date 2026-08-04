@@ -1,10 +1,5 @@
 import { Routes } from '@angular/router';
 
-const comingSoon = () =>
-  import('./shared/components/coming-soon/coming-soon.component').then(
-    (m) => m.ComingSoonComponent,
-  );
-
 export const routes: Routes = [
   {
     path: '',
@@ -26,8 +21,9 @@ export const routes: Routes = [
     path: 'orders',
     loadChildren: () => import('./features/orders/orders.routes').then((m) => m.ordersRoutes),
   },
-  // Feature pages land in later phases; the placeholder keeps navigation alive.
-  { path: 'auth/login', loadComponent: comingSoon },
-  { path: 'auth/register', loadComponent: comingSoon },
+  {
+    path: 'auth',
+    loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
+  },
   { path: '**', redirectTo: '' },
 ];
