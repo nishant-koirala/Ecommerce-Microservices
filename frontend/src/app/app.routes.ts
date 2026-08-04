@@ -18,6 +18,14 @@ export const routes: Routes = [
     path: 'cart',
     loadChildren: () => import('./features/cart/cart.routes').then((m) => m.cartRoutes),
   },
+  {
+    path: 'checkout',
+    loadChildren: () => import('./features/checkout/checkout.routes').then((m) => m.checkoutRoutes),
+  },
+  {
+    path: 'orders',
+    loadChildren: () => import('./features/orders/orders.routes').then((m) => m.ordersRoutes),
+  },
   // Feature pages land in later phases; the placeholder keeps navigation alive.
   { path: 'auth/login', loadComponent: comingSoon },
   { path: 'auth/register', loadComponent: comingSoon },
