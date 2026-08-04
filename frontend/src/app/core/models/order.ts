@@ -21,6 +21,7 @@ export interface OrderItemResponse {
   productName: string;
   quantity: number;
   unitPrice: number;
+  imageUrl: string | null;
 }
 
 export interface OrderResponse {

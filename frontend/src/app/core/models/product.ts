@@ -15,6 +15,7 @@ export interface ProductResponse {
   description: string;
   price: number;
   sku: string;
+  imageUrl: string | null;
   category: CategoryResponse;
 }
 
@@ -23,5 +24,6 @@ export interface ProductRequest {
   description: string;
   price: number;
   sku: string;
+  imageUrl?: string | null;
   categoryId: number;
 }

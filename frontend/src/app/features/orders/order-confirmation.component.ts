@@ -194,6 +194,6 @@ export class OrderConfirmationComponent implements OnInit {
   }
 
   image(item: OrderItemResponse): string {
-    return this.imageService.product({ id: item.productId, sku: '' }, 128);
+    return this.imageService.product({ id: item.productId, sku: '', imageUrl: item.imageUrl }, 128);
   }
 }
