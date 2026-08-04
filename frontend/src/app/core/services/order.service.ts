@@ -28,4 +28,19 @@ export class OrderService {
   cancel(id: number): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(`${API}/orders/${id}/cancel`, null);
   }
+
+  /** ADMIN only — all orders across customers. */
+  listAll(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${API}/orders`);
+  }
+
+  /** ADMIN only — advance a confirmed order to shipped. */
+  ship(id: number): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${API}/orders/${id}/ship`, null);
+  }
+
+  /** ADMIN only — advance a shipped order to delivered. */
+  deliver(id: number): Observable<OrderResponse> {
+    return this.http.post<OrderResponse>(`${API}/orders/${id}/deliver`, null);
+  }
 }

@@ -1,10 +1,17 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import {
+  HttpContextToken,
+  HttpErrorResponse,
+  HttpInterceptorFn,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 
 import { ApiError } from '../models/common';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
+
+/** Opt a request out of the automatic error toast (e.g. expected 404s). */
+export const SUPPRESS_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
@@ -16,13 +23,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         const apiError = error.error as ApiError | undefined;
         const message = apiError?.message ?? fallbackMessage(error);
         const isLoginRequest = req.url.includes('/auth/login');
+        const suppressToast = req.context.get(SUPPRESS_ERROR_TOAST);
 
         if (error.status === 401 && !isLoginRequest) {
           toast.error('Your session has expired. Please sign in again.');
           auth.logout();
-        } else if (error.status === 0) {
+        } else if (!suppressToast && error.status === 0) {
           toast.error('Network error — is the backend running?');
-        } else {
+        } else if (!suppressToast) {
           toast.error(message);
         }
       } else {
