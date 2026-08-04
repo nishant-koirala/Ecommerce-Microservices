@@ -27,6 +27,7 @@ export interface OrderItemResponse {
 export interface OrderResponse {
   id: number;
   userId: number;
+  customerName: string | null;
   status: OrderStatus;
   totalAmount: number;
   paymentId: number | null;

@@ -79,7 +79,7 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
               @for (order of orders(); track order.id) {
                 <tr class="text-neutral-700 dark:text-neutral-200">
                   <td class="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-50">#{{ order.id }}</td>
-                  <td class="px-5 py-4">Customer #{{ order.userId }}</td>
+                  <td class="px-5 py-4">{{ order.customerName ?? 'Customer #' + order.userId }}</td>
                   <td class="px-5 py-4 whitespace-nowrap text-neutral-500 dark:text-neutral-400">{{ formatDate(order.createdAt) }}</td>
                   <td class="px-5 py-4">{{ itemCount(order) }}</td>
                   <td class="px-5 py-4 text-right font-semibold text-neutral-900 dark:text-neutral-50">{{ formatPrice(order.totalAmount) }}</td>
