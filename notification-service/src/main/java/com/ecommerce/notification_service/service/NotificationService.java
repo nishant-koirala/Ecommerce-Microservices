@@ -1,8 +1,11 @@
 package com.ecommerce.notification_service.service;
 
+import com.ecommerce.notification_service.client.UserServiceClient;
+import com.ecommerce.notification_service.client.dto.UserDto;
 import com.ecommerce.notification_service.dto.NotificationResponse;
 import com.ecommerce.notification_service.event.OrderEvent;
 import com.ecommerce.notification_service.event.PaymentEvent;
+import com.ecommerce.notification_service.exception.ForbiddenException;
 import com.ecommerce.notification_service.exception.ResourceNotFoundException;
 import com.ecommerce.notification_service.model.Notification;
 import com.ecommerce.notification_service.model.NotificationType;
@@ -18,10 +21,13 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserServiceClient userServiceClient;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               UserServiceClient userServiceClient) {
         this.notificationRepository = notificationRepository;
+        this.userServiceClient = userServiceClient;
     }
 
     @Transactional
@@ -104,8 +110,12 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getByUserId(Long userId) {
-        return notificationRepository.findByUserId(userId).stream()
+    public List<NotificationResponse> getByUserId(Long userId, String userEmail) {
+        UserDto caller = userServiceClient.getUserByEmail(userEmail);
+        if (!caller.getId().equals(userId)) {
+            throw new ForbiddenException("You can only view your own notifications");
+        }
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

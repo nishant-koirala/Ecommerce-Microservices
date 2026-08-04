@@ -30,7 +30,8 @@ public class NotificationController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<NotificationResponse>> getByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(notificationService.getByUserId(userId));
+    public ResponseEntity<List<NotificationResponse>> getByUserId(@PathVariable Long userId,
+                                                                  @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(notificationService.getByUserId(userId, userEmail));
     }
 }
