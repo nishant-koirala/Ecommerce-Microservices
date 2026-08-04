@@ -29,8 +29,9 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
+    public ResponseEntity<List<OrderResponse>> getOrdersByUserId(@PathVariable Long userId,
+                                                                 @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(orderService.getOrdersByUserId(userId, userEmail));
     }
 
     @GetMapping("/{id}")

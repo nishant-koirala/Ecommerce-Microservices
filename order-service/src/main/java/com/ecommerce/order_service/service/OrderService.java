@@ -75,7 +75,11 @@ public class OrderService {
         this.idempotencyTxTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    public List<OrderResponse> getOrdersByUserId(Long userId) {
+    public List<OrderResponse> getOrdersByUserId(Long userId, String userEmail) {
+        UserDto caller = userServiceClient.getUserByEmail(userEmail);
+        if (caller == null || !caller.getId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to view this user's orders");
+        }
         return orderRepository.findByUserId(userId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -408,6 +412,7 @@ public class OrderService {
                 .status(order.getStatus().name())
                 .totalAmount(order.getTotalAmount())
                 .paymentId(order.getPaymentId())
+                .createdAt(order.getCreatedAt())
                 .items(itemResponses)
                 .build();
     }

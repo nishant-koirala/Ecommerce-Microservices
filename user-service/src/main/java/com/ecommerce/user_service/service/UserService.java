@@ -3,7 +3,9 @@ package com.ecommerce.user_service.service;
 import com.ecommerce.user_service.dto.LoginRequest;
 import com.ecommerce.user_service.dto.LoginResponse;
 import com.ecommerce.user_service.dto.RegisterRequest;
+import com.ecommerce.user_service.dto.UpdateUserRequest;
 import com.ecommerce.user_service.dto.UserResponse;
+import com.ecommerce.user_service.exception.ForbiddenException;
 import com.ecommerce.user_service.exception.UserNotFoundException;
 import com.ecommerce.user_service.model.User;
 import com.ecommerce.user_service.repository.UserRepository;
@@ -84,6 +86,19 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
         return toUserResponse(user);
+    }
+
+    public UserResponse updateUser(Long id, UpdateUserRequest request, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ForbiddenException("You are not allowed to update this profile"));
+        if (!user.getId().equals(id)) {
+            throw new ForbiddenException("You are not allowed to update this profile");
+        }
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        User savedUser = userRepository.save(user);
+        return toUserResponse(savedUser);
     }
 
     private UserResponse toUserResponse(User user) {
