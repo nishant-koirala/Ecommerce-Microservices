@@ -76,6 +76,12 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserResponse> getUsersByIds(List<Long> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(this::toUserResponse)
+                .collect(Collectors.toList());
+    }
+
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));

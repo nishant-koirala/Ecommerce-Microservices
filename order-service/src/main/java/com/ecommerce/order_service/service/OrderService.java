@@ -37,7 +37,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 @Service
 public class OrderService {
@@ -89,8 +92,10 @@ public class OrderService {
         if (!"ADMIN".equals(userRole)) {
             throw new ForbiddenException("ADMIN role required to list all orders");
         }
-        return orderRepository.findAll().stream()
-                .map(this::toResponse)
+        List<Order> orders = orderRepository.findAll();
+        Map<Long, String> customerNames = customerNamesFor(orders);
+        return orders.stream()
+                .map(order -> toResponse(order, customerNames.get(order.getUserId())))
                 .collect(Collectors.toList());
     }
 
@@ -404,6 +409,10 @@ public class OrderService {
     }
 
     private OrderResponse toResponse(Order order) {
+        return toResponse(order, null);
+    }
+
+    private OrderResponse toResponse(Order order, String customerName) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(this::toItemResponse)
                 .collect(Collectors.toList());
@@ -411,12 +420,25 @@ public class OrderService {
         return OrderResponse.builder()
                 .id(order.getId())
                 .userId(order.getUserId())
+                .customerName(customerName)
                 .status(order.getStatus().name())
                 .totalAmount(order.getTotalAmount())
                 .paymentId(order.getPaymentId())
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
                 .build();
+    }
+
+    private Map<Long, String> customerNamesFor(List<Order> orders) {
+        List<Long> userIds = orders.stream()
+                .map(Order::getUserId)
+                .distinct()
+                .toList();
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return userServiceClient.getUsersByIds(userIds).stream()
+                .collect(toMap(UserDto::getId, u -> (u.getFirstName() + " " + u.getLastName()).trim()));
     }
 
     private OrderItemResponse toItemResponse(OrderItem item) {

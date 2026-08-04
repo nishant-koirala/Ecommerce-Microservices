@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -31,7 +32,11 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<List<UserResponse>> getUsers(
+            @RequestParam(value = "ids", required = false) List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            return ResponseEntity.ok(userService.getUsersByIds(ids));
+        }
         return ResponseEntity.ok(userService.getAllUsers());
     }
 

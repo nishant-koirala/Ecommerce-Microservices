@@ -19,6 +19,7 @@ public class OrderResponse {
 
     private Long id;
     private Long userId;
+    private String customerName;
     private String status;
     private BigDecimal totalAmount;
     private Long paymentId;
