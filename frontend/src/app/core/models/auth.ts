@@ -24,3 +24,8 @@ export interface UserResponse {
   lastName: string;
   role: Role;
 }
+
+export interface UpdateUserRequest {
+  firstName: string;
+  lastName: string;
+}

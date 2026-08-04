@@ -146,6 +146,27 @@ import { ThemeService } from '../../../core/services/theme.service';
                     <p class="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-50">{{ auth.displayName() }}</p>
                     <p class="truncate text-xs text-neutral-500 dark:text-neutral-400">{{ auth.currentUser()?.email }}</p>
                   </div>
+                  <a
+                    routerLink="/account"
+                    (click)="menuOpen.set(false)"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <circle cx="10" cy="7.5" r="3" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5a5.5 5.5 0 0 1 11 0" />
+                    </svg>
+                    Account
+                  </a>
+                  <a
+                    routerLink="/account/orders"
+                    (click)="menuOpen.set(false)"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m5 7 5-3 5 3-5 3-5-3zm0 0v6l5 3 5-3V7" />
+                    </svg>
+                    My orders
+                  </a>
                   <button
                     type="button"
                     (click)="signOut()"
@@ -216,6 +237,20 @@ import { ThemeService } from '../../../core/services/theme.service';
               Cart @if (cart.count() > 0) { ({{ cart.count() }}) }
             </a>
             @if (auth.isAuthenticated()) {
+              <a
+                routerLink="/account"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                Account
+              </a>
+              <a
+                routerLink="/account/orders"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                My orders
+              </a>
               <button
                 type="button"
                 (click)="signOut()"

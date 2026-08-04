@@ -1,9 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, switchMap, tap } from 'rxjs';
+import { Observable, map, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResponse, RegisterRequest, UserResponse } from '../models/auth';
+import { LoginRequest, LoginResponse, RegisterRequest, UpdateUserRequest, UserResponse } from '../models/auth';
 import { StorageService } from '../utils/storage';
 import { ToastService } from './toast.service';
 
@@ -63,6 +63,21 @@ export class AuthService {
     this.storage.remove(USER_KEY);
     this.currentUser.set(null);
     this.toast.info('Signed out');
+  }
+
+  /** Update the signed-in user's profile (name). 403 if the caller isn't the owner. */
+  updateProfile(request: UpdateUserRequest): Observable<UserResponse> {
+    const user = this.currentUser();
+    if (!user) {
+      return throwError(() => new Error('Not signed in'));
+    }
+    return this.http.put<UserResponse>(`${API}/users/${user.id}`, request).pipe(
+      tap((updated) => {
+        this.currentUser.set(updated);
+        this.storage.setObject(USER_KEY, updated);
+        this.toast.success('Profile updated');
+      }),
+    );
   }
 
   /** Re-fetch the current user profile (e.g. after app reload with a token). */

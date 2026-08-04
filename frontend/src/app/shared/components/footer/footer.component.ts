@@ -34,6 +34,8 @@ import { RouterLink } from '@angular/router';
           <ul class="mt-4 space-y-2.5 text-sm text-neutral-500 dark:text-neutral-400">
             <li><a routerLink="/auth/login" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Sign in</a></li>
             <li><a routerLink="/auth/register" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Create account</a></li>
+            <li><a routerLink="/account" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">My account</a></li>
+            <li><a routerLink="/account/orders" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">My orders</a></li>
             <li><a routerLink="/cart" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Cart</a></li>
           </ul>
         </div>
