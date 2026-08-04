@@ -16,19 +16,19 @@ public class GatewayConfig {
     @Bean
     public RouterFunction<ServerResponse> gatewayRoutes() {
         return GatewayRouterFunctions.route("api-gateway")
-                .add(serviceRoute("user_route", "http://localhost:8081",
+                .add(serviceRoute("user_route", "http://localhost:8091",
                         GatewayRequestPredicates.path("/api/v1/users/**", "/api/v1/auth/**")))
-                .add(serviceRoute("product_route", "http://localhost:8082",
+                .add(serviceRoute("product_route", "http://localhost:8092",
                         GatewayRequestPredicates.path("/api/v1/products/**", "/api/v1/categories/**")))
-                .add(serviceRoute("inventory_route", "http://localhost:8083",
+                .add(serviceRoute("inventory_route", "http://localhost:8093",
                         GatewayRequestPredicates.path("/api/v1/inventory/**")))
-                .add(serviceRoute("cart_route", "http://localhost:8084",
+                .add(serviceRoute("cart_route", "http://localhost:8094",
                         GatewayRequestPredicates.path("/api/v1/cart/**")))
-                .add(serviceRoute("order_route", "http://localhost:8085",
+                .add(serviceRoute("order_route", "http://localhost:8095",
                         GatewayRequestPredicates.path("/api/v1/orders/**")))
-                .add(serviceRoute("payment_route", "http://localhost:8086",
+                .add(serviceRoute("payment_route", "http://localhost:8096",
                         GatewayRequestPredicates.path("/api/v1/payments/**")))
-                .add(serviceRoute("notification_route", "http://localhost:8087",
+                .add(serviceRoute("notification_route", "http://localhost:8097",
                         GatewayRequestPredicates.path("/api/v1/notifications/**")))
                 .build();
     }
