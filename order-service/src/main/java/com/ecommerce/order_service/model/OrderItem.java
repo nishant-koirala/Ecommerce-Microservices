@@ -33,4 +33,7 @@ public class OrderItem {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
+
+    @Column(length = 1000)
+    private String imageUrl;
 }

@@ -282,6 +282,7 @@ public class OrderService {
                         .productName(product.getName())
                         .quantity(itemRequest.getQuantity())
                         .unitPrice(product.getPrice())
+                        .imageUrl(product.getImageUrl())
                         .build();
 
                 reservedItems.add(orderItem);
@@ -383,6 +384,7 @@ public class OrderService {
                         .productName(item.getProductName())
                         .quantity(item.getQuantity())
                         .unitPrice(item.getUnitPrice())
+                        .imageUrl(item.getImageUrl())
                         .build());
             }
             orderRepository.save(failedOrder);
@@ -423,6 +425,7 @@ public class OrderService {
                 .productName(item.getProductName())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
+                .imageUrl(item.getImageUrl())
                 .build();
     }
 }
