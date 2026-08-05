@@ -91,7 +91,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return PATH_MATCHER.match("/api/v1/users", path);
         }
         if ("GET".equals(method)) {
-            return PATH_MATCHER.match("/api/v1/products/**", path);
+            return PATH_MATCHER.match("/api/v1/products/**", path)
+                    || PATH_MATCHER.match("/api/v1/reviews/**", path);
         }
         return false;
     }

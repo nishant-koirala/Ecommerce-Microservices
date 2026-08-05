@@ -107,6 +107,18 @@ services:
     volumes:
       - notification-db-data:/var/lib/postgresql/data
 
+  review-db:
+    image: postgres:16
+    container_name: review-db
+    environment:
+      POSTGRES_DB: reviewdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5440:5432"
+    volumes:
+      - review-db-data:/var/lib/postgresql/data
+
 volumes:
   user-db-data:
   product-db-data:
@@ -115,3 +127,4 @@ volumes:
   order-db-data:
   payment-db-data:
   notification-db-data:
+  review-db-data:
