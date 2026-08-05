@@ -4,7 +4,8 @@ import { RouterLink } from '@angular/router';
 import { ProductResponse } from '../../../core/models/product';
 import { CartService } from '../../../core/services/cart.service';
 import { ImageService } from '../../../core/services/image.service';
-import { formatPrice, pseudoRating, pseudoReviewCount } from '../../../core/utils/format';
+import { ReviewService } from '../../../core/services/review.service';
+import { formatPrice } from '../../../core/utils/format';
 import { BadgeComponent } from '../badge/badge.component';
 import { ButtonComponent } from '../button/button.component';
 import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
@@ -46,7 +47,11 @@ import { RatingStarsComponent } from '../rating-stars/rating-stars.component';
 
         <div class="mt-1 flex items-center gap-2">
           <app-rating-stars [value]="rating()" />
-          <span class="text-xs text-neutral-400">({{ reviewCount() }})</span>
+          @if (reviewCount() > 0) {
+            <span class="text-xs text-neutral-400">({{ reviewCount() }})</span>
+          } @else {
+            <span class="text-xs text-neutral-400">No reviews</span>
+          }
         </div>
 
         <div class="mt-auto flex items-center justify-between pt-3">
@@ -80,12 +85,13 @@ export class ProductCardComponent {
 
   private readonly imageService = inject(ImageService);
   private readonly cart = inject(CartService);
+  private readonly reviews = inject(ReviewService);
 
   protected readonly added = signal(false);
   protected readonly imageUrl = computed(() => this.imageService.product(this.product()));
   protected readonly price = computed(() => formatPrice(this.product().price));
-  protected readonly rating = computed(() => pseudoRating(this.product().id));
-  protected readonly reviewCount = computed(() => pseudoReviewCount(this.product().id));
+  protected readonly rating = computed(() => this.reviews.ratingFor(this.product().id));
+  protected readonly reviewCount = computed(() => this.reviews.countFor(this.product().id));
 
   addToCart(): void {
     this.cart.add(this.product());

@@ -6,6 +6,7 @@ import { take } from 'rxjs';
 import { CategoryResponse, ProductResponse } from '../../core/models/product';
 import { PlatformService } from '../../core/services/platform.service';
 import { ProductService } from '../../core/services/product.service';
+import { ReviewService } from '../../core/services/review.service';
 import { isSortOption, deriveCategories, sortProducts, SortOption } from '../../core/utils/products';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
@@ -247,6 +248,7 @@ export class ProductsListingComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductService);
+  private readonly reviews = inject(ReviewService);
   private readonly platform = inject(PlatformService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -358,6 +360,7 @@ export class ProductsListingComponent implements OnInit {
           const derived = deriveCategories(products).sort((a, b) => a.name.localeCompare(b.name));
           this.categories.set(derived);
           this.catalogProducts.set(products);
+          this.reviews.ensureSummaries(products.map((p) => p.id));
         },
       });
   }

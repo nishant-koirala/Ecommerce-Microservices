@@ -1,14 +1,21 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { HttpContext } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs';
 
 import { ProductResponse } from '../../core/models/product';
+import { ReviewResponse } from '../../core/models/review';
+import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
 import { ImageService } from '../../core/services/image.service';
 import { PlatformService } from '../../core/services/platform.service';
 import { ProductService } from '../../core/services/product.service';
-import { formatPrice, pseudoRating, pseudoReviewCount } from '../../core/utils/format';
+import { ReviewService } from '../../core/services/review.service';
+import { ToastService } from '../../core/services/toast.service';
+import { SUPPRESS_ERROR_TOAST } from '../../core/interceptors/error.interceptor';
+import { formatDate, formatPrice } from '../../core/utils/format';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { LinkButtonComponent } from '../../shared/components/button/link-button.component';
@@ -21,6 +28,7 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
   standalone: true,
   imports: [
     RouterLink,
+    ReactiveFormsModule,
     BadgeComponent,
     ButtonComponent,
     LinkButtonComponent,
@@ -93,9 +101,13 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
 
             <div class="mt-3 flex items-center gap-2">
               <app-rating-stars [value]="rating()" />
-              <span class="text-sm text-neutral-500 dark:text-neutral-400">
-                {{ rating().toFixed(1) }} · {{ reviewCount() }} reviews
-              </span>
+              @if (reviewCount() > 0) {
+                <span class="text-sm text-neutral-500 dark:text-neutral-400">
+                  {{ rating().toFixed(1) }} · {{ reviewCount() }} review{{ reviewCount() === 1 ? '' : 's' }}
+                </span>
+              } @else {
+                <span class="text-sm text-neutral-500 dark:text-neutral-400">No reviews yet</span>
+              }
             </div>
 
             <p class="mt-6 font-display text-3xl font-semibold text-neutral-900 dark:text-neutral-50">
@@ -172,6 +184,152 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
             </dl>
           </div>
         </div>
+
+        <!-- Reviews -->
+        <section class="mt-16">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400">Ratings</p>
+              <h2 class="mt-2 font-display text-2xl font-semibold text-neutral-900 dark:text-neutral-50 sm:text-3xl">
+                Reviews
+              </h2>
+            </div>
+            @if (auth.isAuthenticated()) {
+              <app-button
+                size="sm"
+                [variant]="showForm() ? 'outline' : 'primary'"
+                (click)="toggleReviewForm()"
+              >
+                {{ myReview() ? 'Edit your review' : 'Write a review' }}
+              </app-button>
+            }
+          </div>
+
+          <div class="mt-6 grid gap-8 lg:grid-cols-[280px_1fr]">
+            <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+              @if (reviewCount() > 0) {
+                <p class="font-display text-5xl font-bold text-neutral-900 dark:text-neutral-50">
+                  {{ rating().toFixed(1) }}
+                </p>
+                <div class="mt-2">
+                  <app-rating-stars [value]="rating()" />
+                </div>
+                <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+                  {{ reviewCount() }} review{{ reviewCount() === 1 ? '' : 's' }}
+                </p>
+              } @else {
+                <p class="font-display text-lg font-medium text-neutral-900 dark:text-neutral-100">No reviews yet</p>
+                <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Be the first to review this product.</p>
+              }
+            </div>
+
+            <div>
+              @if (reviewsLoading()) {
+                <div class="flex flex-col gap-4">
+                  <app-skeleton shape="h-24 w-full rounded-2xl" />
+                  <app-skeleton shape="h-24 w-full rounded-2xl" />
+                </div>
+              } @else if (reviews().length === 0) {
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">No reviews yet.</p>
+              } @else {
+                <ul class="space-y-4">
+                  @for (review of reviews(); track review.id) {
+                    <li class="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                      <div class="flex items-start justify-between gap-4">
+                        <div>
+                          <p class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{{ review.reviewerName }}</p>
+                          <div class="mt-1 flex items-center gap-2">
+                            <app-rating-stars [value]="review.rating" />
+                            <span class="text-xs text-neutral-400">{{ formatDate(review.createdAt) }}</span>
+                          </div>
+                        </div>
+                        @if (review.userId === auth.currentUser()?.id) {
+                          <button
+                            type="button"
+                            (click)="deleteReview(review.id)"
+                            class="text-xs font-medium text-neutral-400 transition-colors hover:text-red-500"
+                            aria-label="Delete your review"
+                          >
+                            Delete
+                          </button>
+                        }
+                      </div>
+                      @if (review.title) {
+                        <p class="mt-3 text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ review.title }}</p>
+                      }
+                      @if (review.comment) {
+                        <p class="mt-1 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{{ review.comment }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+
+          @if (auth.isAuthenticated() && showForm()) {
+            <form
+              class="mt-8 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
+              [formGroup]="reviewForm"
+              (ngSubmit)="submitReview()"
+            >
+              <h3 class="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                {{ myReview() ? 'Edit your review' : 'Write a review' }}
+              </h3>
+              <div class="mt-4 flex items-center gap-1">
+                <span class="mr-2 text-sm text-neutral-500 dark:text-neutral-400">Your rating</span>
+                @for (star of starOptions; track star) {
+                  <button
+                    type="button"
+                    (click)="setReviewRating(star)"
+                    [attr.aria-label]="'Rate ' + star + ' star'"
+                  >
+                    <svg
+                      viewBox="0 0 20 20"
+                      class="size-6"
+                      [attr.fill]="reviewRating() >= star ? 'currentColor' : 'none'"
+                      [class]="reviewRating() >= star ? 'text-accent-500' : 'text-neutral-300 dark:text-neutral-600'"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linejoin="round"
+                        d="M10 1.5l2.47 5.01 5.53.8-4 3.9.95 5.52L10 14.11l-4.95 2.6.95-5.52-4-3.9 5.53-.8L10 1.5z"
+                      />
+                    </svg>
+                  </button>
+                }
+              </div>
+              <div class="mt-4 grid gap-4">
+                <input
+                  formControlName="title"
+                  type="text"
+                  placeholder="Review title (optional)"
+                  class="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                />
+                <textarea
+                  formControlName="comment"
+                  rows="4"
+                  placeholder="Share your experience with this product (optional)"
+                  class="w-full resize-none rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+                ></textarea>
+              </div>
+              <div class="mt-4 flex items-center gap-3">
+                <app-button size="sm" type="submit" [disabled]="submitting()">
+                  {{ submitting() ? 'Saving…' : myReview() ? 'Update review' : 'Submit review' }}
+                </app-button>
+                <button
+                  type="button"
+                  (click)="toggleReviewForm()"
+                  class="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          }
+        </section>
       }
 
       <!-- Related products -->
@@ -202,6 +360,9 @@ export class ProductDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductService);
+  private readonly reviewsService = inject(ReviewService);
+  protected readonly auth = inject(AuthService);
+  private readonly toast = inject(ToastService);
   private readonly cart = inject(CartService);
   private readonly imageService = inject(ImageService);
   private readonly platform = inject(PlatformService);
@@ -217,10 +378,29 @@ export class ProductDetailComponent implements OnInit {
     this.product() ? this.imageService.product(this.product()!, 900) : '',
   );
   readonly price = computed(() => (this.product() ? formatPrice(this.product()!.price) : ''));
-  readonly rating = computed(() => (this.product() ? pseudoRating(this.product()!.id) : 0));
-  readonly reviewCount = computed(() =>
-    this.product() ? pseudoReviewCount(this.product()!.id) : 0,
+  readonly rating = computed(() =>
+    this.product() ? this.reviewsService.ratingFor(this.product()!.id) : 0,
   );
+  readonly reviewCount = computed(() =>
+    this.product() ? this.reviewsService.countFor(this.product()!.id) : 0,
+  );
+
+  readonly reviews = signal<ReviewResponse[]>([]);
+  readonly reviewsLoading = signal(false);
+  readonly reviewRating = signal(5);
+  readonly showForm = signal(false);
+  readonly submitting = signal(false);
+  readonly reviewForm = new FormGroup({
+    title: new FormControl(''),
+    comment: new FormControl(''),
+  });
+  protected readonly starOptions = [1, 2, 3, 4, 5];
+  protected readonly formatDate = formatDate;
+
+  readonly myReview = computed(() => {
+    const user = this.auth.currentUser();
+    return user ? this.reviews().find((r) => r.userId === user.id) ?? null : null;
+  });
 
   ngOnInit(): void {
     if (!this.platform.isBrowser) {
@@ -262,6 +442,8 @@ export class ProductDetailComponent implements OnInit {
         this.qty.set(1);
         this.loading.set(false);
         this.loadRelated(product);
+        this.reviewsService.ensureSummaries([id]);
+        this.loadReviews(id);
       },
       error: () => {
         this.product.set(null);
@@ -277,6 +459,88 @@ export class ProductDetailComponent implements OnInit {
           .filter((p) => p.category.id === product.category.id && p.id !== product.id)
           .slice(0, 4),
       );
+    });
+  }
+
+  private loadReviews(productId: number): void {
+    this.reviewsLoading.set(true);
+    this.reviewsService.getByProduct(productId).pipe(take(1)).subscribe({
+      next: (list) => {
+        this.reviews.set(list);
+        this.reviewsLoading.set(false);
+      },
+      error: () => {
+        this.reviews.set([]);
+        this.reviewsLoading.set(false);
+      },
+    });
+  }
+
+  toggleReviewForm(): void {
+    if (this.showForm()) {
+      this.showForm.set(false);
+      return;
+    }
+    const mine = this.myReview();
+    if (mine) {
+      this.reviewRating.set(mine.rating);
+      this.reviewForm.setValue({ title: mine.title ?? '', comment: mine.comment ?? '' });
+    } else {
+      this.reviewRating.set(5);
+      this.reviewForm.setValue({ title: '', comment: '' });
+    }
+    this.showForm.set(true);
+  }
+
+  setReviewRating(rating: number): void {
+    this.reviewRating.set(rating);
+  }
+
+  submitReview(): void {
+    const product = this.product();
+    const user = this.auth.currentUser();
+    if (!product || !user || this.submitting()) {
+      return;
+    }
+    this.submitting.set(true);
+    const raw = this.reviewForm.getRawValue();
+    this.reviewsService
+      .create({
+        userId: user.id,
+        productId: product.id,
+        rating: this.reviewRating(),
+        title: raw.title ?? '',
+        comment: raw.comment ?? '',
+      })
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.showForm.set(false);
+          this.toast.success('Thank you for your review');
+          this.reviewsService.refreshSummary(product.id);
+          this.loadReviews(product.id);
+        },
+        error: () => {
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  deleteReview(id: number): void {
+    if (!window.confirm('Delete this review?')) {
+      return;
+    }
+    this.reviewsService.remove(id).pipe(take(1)).subscribe({
+      next: () => {
+        const product = this.product();
+        if (product) {
+          this.reviewsService.refreshSummary(product.id);
+          this.loadReviews(product.id);
+        }
+        this.toast.success('Review deleted');
+      },
+      error: () => undefined,
     });
   }
 }
