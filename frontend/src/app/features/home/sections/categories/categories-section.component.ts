@@ -69,6 +69,9 @@ export class CategoriesSectionComponent {
   private readonly imageService = inject(ImageService);
 
   image(category: CategoryResponse): string {
-    return this.imageService.product({ id: category.id, sku: `category-${category.name}` }, 480);
+    return this.imageService.product(
+      { id: category.id, sku: `category-${category.name}`, imageUrl: category.imageUrl },
+      480,
+    );
   }
 }
