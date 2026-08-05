@@ -1,8 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { PlatformService } from '../../../core/services/platform.service';
 import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
@@ -170,12 +172,17 @@ import { ThemeService } from '../../../core/services/theme.service';
                   <a
                     routerLink="/account/notifications"
                     (click)="menuOpen.set(false)"
-                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                    class="relative mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
                   >
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 8.5A4.857 4.857 0 0 0 10 3.643 4.857 4.857 0 0 0 5.143 8.5v2.143c0 .858-.286 1.687-.813 2.357h11.34a4.2 4.2 0 0 1-.813-2.357V8.5zM8.5 16.5a1.5 1.5 0 0 0 3 0" />
                     </svg>
                     Notifications
+                    @if (notificationService.unreadCount() > 0) {
+                      <span class="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-accent-500 px-1 text-[11px] font-bold text-neutral-950">
+                        {{ notificationService.unreadCount() }}
+                      </span>
+                    }
                   </a>
                   @if (auth.isAdmin()) {
                     <a
@@ -278,7 +285,7 @@ import { ThemeService } from '../../../core/services/theme.service';
                 (click)="mobileOpen.set(false)"
                 class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
               >
-                Notifications
+                Notifications @if (notificationService.unreadCount() > 0) { ({{ notificationService.unreadCount() }}) }
               </a>
               @if (auth.isAdmin()) {
                 <a
@@ -314,11 +321,22 @@ import { ThemeService } from '../../../core/services/theme.service';
 export class NavbarComponent {
   protected readonly auth = inject(AuthService);
   protected readonly cart = inject(CartService);
+  protected readonly notificationService = inject(NotificationService);
   protected readonly theme = inject(ThemeService);
+  private readonly platform = inject(PlatformService);
   private readonly router = inject(Router);
 
   protected readonly mobileOpen = signal(false);
   protected readonly menuOpen = signal(false);
+
+  private readonly unreadEffect = effect(() => {
+    const user = this.auth.currentUser();
+    if (user && this.platform.isBrowser) {
+      this.notificationService.loadUnreadCount(user.id);
+    } else {
+      this.notificationService.unreadCount.set(0);
+    }
+  });
 
   readonly initials = computed(() => {
     const user = this.auth.currentUser();

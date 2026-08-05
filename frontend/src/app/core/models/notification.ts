@@ -14,4 +14,5 @@ export interface NotificationResponse {
   message: string;
   type: NotificationType;
   createdAt: string;
+  read: boolean;
 }

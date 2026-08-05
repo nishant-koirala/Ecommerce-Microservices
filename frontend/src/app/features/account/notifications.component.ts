@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { take } from 'rxjs';
@@ -6,6 +7,8 @@ import { take } from 'rxjs';
 import { NotificationResponse, NotificationType } from '../../core/models/notification';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { PlatformService } from '../../core/services/platform.service';
+import { SUPPRESS_ERROR_TOAST } from '../../core/interceptors/error.interceptor';
 import { formatDate } from '../../core/utils/format';
 import { LinkButtonComponent } from '../../shared/components/button/link-button.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
@@ -64,7 +67,13 @@ const TONE_ICON_CLASS: Record<Tone, string> = {
       } @else {
         <ul class="mt-8 space-y-3">
           @for (notification of notifications(); track notification.id) {
-            <li class="flex items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <li
+              class="relative flex items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900"
+              [class]="rowClass(notification)"
+            >
+              @if (!notification.read) {
+                <span class="absolute right-4 top-4 size-2.5 rounded-full bg-accent-500" aria-hidden="true"></span>
+              }
               <span [class]="iconClass(notification.type)">
                 @if (isOrder(notification.type)) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-5" aria-hidden="true">
@@ -100,6 +109,7 @@ const TONE_ICON_CLASS: Record<Tone, string> = {
 export class NotificationsComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly auth = inject(AuthService);
+  private readonly platform = inject(PlatformService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loading = signal(true);
@@ -120,6 +130,7 @@ export class NotificationsComponent implements OnInit {
         next: (list) => {
           this.notifications.set(list);
           this.loading.set(false);
+          this.markAllRead(userId);
         },
         error: () => {
           this.loading.set(false);
@@ -133,5 +144,20 @@ export class NotificationsComponent implements OnInit {
 
   isOrder(type: NotificationType): boolean {
     return type.startsWith('ORDER_');
+  }
+
+  rowClass(notification: NotificationResponse): string {
+    return notification.read
+      ? ''
+      : 'border-primary-200 bg-primary-50/40 dark:border-primary-800 dark:bg-primary-900/20';
+  }
+
+  private markAllRead(userId: number): void {
+    if (!this.platform.isBrowser) return;
+    const context = new HttpContext().set(SUPPRESS_ERROR_TOAST, true);
+    this.notificationService.markAllAsRead(userId, context).subscribe({
+      next: () => this.notificationService.unreadCount.set(0),
+      error: () => undefined,
+    });
   }
 }
