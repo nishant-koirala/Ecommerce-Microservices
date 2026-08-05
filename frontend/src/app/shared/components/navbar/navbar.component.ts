@@ -6,6 +6,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PlatformService } from '../../../core/services/platform.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { WishlistService } from '../../../core/services/wishlist.service';
 
 @Component({
   selector: 'app-navbar',
@@ -184,6 +185,21 @@ import { ThemeService } from '../../../core/services/theme.service';
                       </span>
                     }
                   </a>
+                  <a
+                    routerLink="/account/wishlist"
+                    (click)="menuOpen.set(false)"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                    </svg>
+                    Wishlist
+                    @if (wishlist.count() > 0) {
+                      <span class="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-accent-500 px-1 text-[11px] font-bold text-neutral-950">
+                        {{ wishlist.count() }}
+                      </span>
+                    }
+                  </a>
                   @if (auth.isAdmin()) {
                     <a
                       routerLink="/admin/orders"
@@ -287,6 +303,13 @@ import { ThemeService } from '../../../core/services/theme.service';
               >
                 Notifications @if (notificationService.unreadCount() > 0) { ({{ notificationService.unreadCount() }}) }
               </a>
+              <a
+                routerLink="/account/wishlist"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                Wishlist @if (wishlist.count() > 0) { ({{ wishlist.count() }}) }
+              </a>
               @if (auth.isAdmin()) {
                 <a
                   routerLink="/admin/orders"
@@ -323,6 +346,7 @@ export class NavbarComponent {
   protected readonly cart = inject(CartService);
   protected readonly notificationService = inject(NotificationService);
   protected readonly theme = inject(ThemeService);
+  protected readonly wishlist = inject(WishlistService);
   private readonly platform = inject(PlatformService);
   private readonly router = inject(Router);
 

@@ -14,6 +14,7 @@ import { PlatformService } from '../../core/services/platform.service';
 import { ProductService } from '../../core/services/product.service';
 import { ReviewService } from '../../core/services/review.service';
 import { ToastService } from '../../core/services/toast.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 import { SUPPRESS_ERROR_TOAST } from '../../core/interceptors/error.interceptor';
 import { formatDate, formatPrice } from '../../core/utils/format';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
@@ -142,6 +143,23 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
                   <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M10 4a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5A.75.75 0 0 1 10 4z" clip-rule="evenodd"/></svg>
                 </button>
               </div>
+
+              <button
+                type="button"
+                (click)="toggleWishlist()"
+                class="flex size-12 shrink-0 items-center justify-center rounded-full border border-neutral-300 bg-white transition-all hover:bg-neutral-50 hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:hover:border-neutral-600"
+                [attr.aria-label]="wishlist.isInWishlist(product()!.id) ? 'Remove from wishlist' : 'Add to wishlist'"
+              >
+                @if (wishlist.isInWishlist(product()!.id)) {
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="size-6 text-red-500" aria-hidden="true">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" stroke="currentColor" class="size-6 text-neutral-500" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                  </svg>
+                }
+              </button>
 
               <app-button
                 class="flex-1"
@@ -367,6 +385,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly imageService = inject(ImageService);
   private readonly platform = inject(PlatformService);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly wishlist = inject(WishlistService);
 
   readonly loading = signal(true);
   readonly product = signal<ProductResponse | null>(null);
@@ -432,6 +451,14 @@ export class ProductDetailComponent implements OnInit {
     this.cart.add(product, this.qty());
     this.added.set(true);
     setTimeout(() => this.added.set(false), 1400);
+  }
+
+  toggleWishlist(): void {
+    const product = this.product();
+    if (!product) {
+      return;
+    }
+    this.wishlist.toggle(product.id);
   }
 
   private loadProduct(id: number): void {
