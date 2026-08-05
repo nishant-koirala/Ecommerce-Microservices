@@ -22,4 +22,5 @@ public class NotificationResponse {
     private String message;
     private String type;
     private LocalDateTime createdAt;
+    private boolean read;
 }

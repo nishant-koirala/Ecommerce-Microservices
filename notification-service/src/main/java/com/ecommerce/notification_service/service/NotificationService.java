@@ -120,6 +120,25 @@ public class NotificationService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void markAllAsRead(Long userId, String userEmail) {
+        verifyOwner(userId, userEmail);
+        notificationRepository.markAllAsRead(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public long getUnreadCount(Long userId, String userEmail) {
+        verifyOwner(userId, userEmail);
+        return notificationRepository.countByUserIdAndReadFalse(userId);
+    }
+
+    private void verifyOwner(Long userId, String userEmail) {
+        UserDto caller = userServiceClient.getUserByEmail(userEmail);
+        if (!caller.getId().equals(userId)) {
+            throw new ForbiddenException("You can only access your own notifications");
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<NotificationResponse> getAll() {
         return notificationRepository.findAll().stream()
@@ -136,6 +155,7 @@ public class NotificationService {
                 .message(notification.getMessage())
                 .type(notification.getType().name())
                 .createdAt(notification.getCreatedAt())
+                .read(notification.isRead())
                 .build();
     }
 }

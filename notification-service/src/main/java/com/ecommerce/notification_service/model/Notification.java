@@ -37,6 +37,10 @@ public class Notification {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean read = false;
+
     @PrePersist
     public void prePersist() {
         if (type == null) {

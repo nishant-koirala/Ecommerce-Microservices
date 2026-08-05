@@ -34,4 +34,17 @@ public class NotificationController {
                                                                   @RequestHeader("X-User-Email") String userEmail) {
         return ResponseEntity.ok(notificationService.getByUserId(userId, userEmail));
     }
+
+    @PostMapping("/user/{userId}/read")
+    public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId,
+                                              @RequestHeader("X-User-Email") String userEmail) {
+        notificationService.markAllAsRead(userId, userEmail);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/user/{userId}/unread-count")
+    public ResponseEntity<Long> getUnreadCount(@PathVariable Long userId,
+                                               @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(notificationService.getUnreadCount(userId, userEmail));
+    }
 }
