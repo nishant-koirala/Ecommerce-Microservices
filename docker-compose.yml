@@ -119,6 +119,18 @@ services:
     volumes:
       - review-db-data:/var/lib/postgresql/data
 
+  wishlist-db:
+    image: postgres:16
+    container_name: wishlist-db
+    environment:
+      POSTGRES_DB: wishlistdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5441:5432"
+    volumes:
+      - wishlist-db-data:/var/lib/postgresql/data
+
 volumes:
   user-db-data:
   product-db-data:
@@ -128,3 +140,4 @@ volumes:
   payment-db-data:
   notification-db-data:
   review-db-data:
+  wishlist-db-data:

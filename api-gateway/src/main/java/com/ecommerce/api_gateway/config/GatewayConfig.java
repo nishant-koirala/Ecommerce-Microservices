@@ -32,6 +32,8 @@ public class GatewayConfig {
                         GatewayRequestPredicates.path("/api/v1/notifications/**")))
                 .add(serviceRoute("review_route", "http://localhost:8098",
                         GatewayRequestPredicates.path("/api/v1/reviews/**")))
+                .add(serviceRoute("wishlist_route", "http://localhost:8099",
+                        GatewayRequestPredicates.path("/api/v1/wishlist/**")))
                 .build();
     }
 
