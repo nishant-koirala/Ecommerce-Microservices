@@ -72,6 +72,7 @@ public class ProductService {
                 .id(product.getCategory().getId())
                 .name(product.getCategory().getName())
                 .description(product.getCategory().getDescription())
+                .imageUrl(product.getCategory().getImageUrl())
                 .build();
 
         return ProductResponse.builder()

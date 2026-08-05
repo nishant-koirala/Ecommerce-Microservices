@@ -2,13 +2,13 @@
 TRUNCATE products RESTART IDENTITY CASCADE;
 TRUNCATE categories RESTART IDENTITY CASCADE;
 
-INSERT INTO categories (name, description) VALUES
-  ('Home & Living', 'Curated pieces for a considered home'),
-  ('Kitchen & Dining', 'Tools and serveware built for daily rituals'),
-  ('Desk & Office', 'Stationery and workspace essentials'),
-  ('Apparel', 'Clothing with an eye for craft'),
-  ('Bags & Carry', 'Carry goods made to last'),
-  ('Accessories', 'Small objects, considered');
+INSERT INTO categories (name, description, image_url) VALUES
+  ('Home & Living', 'Curated pieces for a considered home', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'),
+  ('Kitchen & Dining', 'Tools and serveware built for daily rituals', 'https://images.unsplash.com/photo-1467003909585-2f8a72700288'),
+  ('Desk & Office', 'Stationery and workspace essentials', 'https://images.unsplash.com/photo-1524758631624-e2822e304c36'),
+  ('Apparel', 'Clothing with an eye for craft', 'https://images.unsplash.com/photo-1475178626620-a4d074967452'),
+  ('Bags & Carry', 'Carry goods made to last', 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62'),
+  ('Accessories', 'Small objects, considered', 'https://images.unsplash.com/photo-1511499767150-a48a237f0083');
 
 INSERT INTO products (name, description, price, sku, image_url, category_id, created_at, updated_at) VALUES
   -- Home & Living (1)

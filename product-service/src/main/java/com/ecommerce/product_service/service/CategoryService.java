@@ -30,6 +30,7 @@ public class CategoryService {
         Category category = Category.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .imageUrl(request.getImageUrl())
                 .build();
         Category saved = categoryRepository.save(category);
         return toResponse(saved);
@@ -40,6 +41,7 @@ public class CategoryService {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
+                .imageUrl(category.getImageUrl())
                 .build();
     }
 }
