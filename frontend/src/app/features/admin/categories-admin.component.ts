@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, take } from 'rxjs';
@@ -28,18 +28,31 @@ const INPUT_CLASS =
 <app-skeleton shape="h-16 w-full rounded-2xl" />
 </div>
  } @else {
-<div class="overflow-x-auto rounded-2xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+<input #search type="search" placeholder="Search categories…"
+ (input)="query.set(search.value); resetPage()"
+ class="w-64 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500/20 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100" />
+@if (paged().length === 0) {
+<div class="rounded-lg border border-dashed border-neutral-300 py-24 text-center dark:border-neutral-700">
+<p class="font-medium text-neutral-900 dark:text-neutral-50">No categories match your search</p>
+<p class="mt-1 text-sm text-neutral-500">Try a different name or description.</p>
+</div>
+} @else {
+<div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
 <table class="w-full text-sm">
 <thead>
 <tr class="text-left text-xs uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-<th class="px-5 py-4 font-semibold">Name</th>
+<th class="px-5 py-4 font-semibold">
+<button type="button" (click)="sortBy('name')" class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-neutral-900 dark:hover:text-neutral-50">
+Name {{ sortIndicator('name') }}
+</button>
+</th>
 <th class="px-5 py-4 font-semibold">Description</th>
 <th class="px-5 py-4 font-semibold">Image</th>
 <th class="px-5 py-4 text-right font-semibold">Actions</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
- @for (category of categories(); track category.id) {
+ @for (category of paged(); track category.id) {
 <tr class="text-neutral-700 dark:text-neutral-200">
 <td class="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-50">{{ category.name }}</td>
 <td class="px-5 py-4">
@@ -63,6 +76,15 @@ const INPUT_CLASS =
 </tbody>
 </table>
 </div>
+<div class="flex items-center justify-between text-sm text-neutral-500 dark:text-neutral-400">
+<span>Showing {{ paged().length }} of {{ sorted().length }} categor{{ sorted().length === 1 ? 'y' : 'ies' }}</span>
+<div class="flex items-center gap-1">
+<app-button size="sm" variant="outline" [disabled]="page() <= 1" (click)="page.set(page() - 1)">Prev</app-button>
+<span class="px-2 tabular-nums text-neutral-900 dark:text-neutral-50">Page {{ page() }} / {{ pageCount() }}</span>
+<app-button size="sm" variant="outline" [disabled]="page() >= pageCount()" (click)="page.set(page() + 1)">Next</app-button>
+</div>
+</div>
+}
  }
 </section>
 
@@ -106,6 +128,51 @@ export class CategoriesAdminComponent implements OnInit {
  readonly editingCategory = signal<CategoryResponse | null>(null);
  readonly deleteBusy = signal<number | null>(null);
  readonly showConfirmDelete = signal<CategoryResponse | null>(null);
+
+ readonly query = signal('');
+ readonly sortKey = signal<'name'>('name');
+ readonly sortDir = signal<'asc' | 'desc'>('asc');
+ readonly page = signal(1);
+ readonly pageSize = 10;
+
+ readonly filtered = computed(() => {
+  const q = this.query().toLowerCase();
+  return this.categories().filter((c) => {
+   if (!q) return true;
+   return c.name.toLowerCase().includes(q) || (c.description ?? '').toLowerCase().includes(q);
+  });
+ });
+
+ readonly sorted = computed(() => {
+  const dir = this.sortDir() === 'asc' ? 1 : -1;
+  return [...this.filtered()].sort((a, b) => a.name.localeCompare(b.name) * dir);
+ });
+
+ readonly pageCount = computed(() => Math.max(1, Math.ceil(this.sorted().length / this.pageSize)));
+ readonly paged = computed(() => {
+  const safePage = Math.min(this.page(), this.pageCount());
+  const start = (safePage - 1) * this.pageSize;
+  return this.sorted().slice(start, start + this.pageSize);
+ });
+
+ sortBy(key: 'name'): void {
+  if (this.sortKey() === key) {
+   this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+  } else {
+   this.sortKey.set(key);
+   this.sortDir.set('asc');
+  }
+  this.page.set(1);
+ }
+
+ sortIndicator(key: 'name'): string {
+  if (this.sortKey() !== key) return '↕';
+  return this.sortDir() === 'asc' ? '↑' : '↓';
+ }
+
+ resetPage(): void {
+  this.page.set(1);
+ }
 
  readonly form = new FormGroup({
  name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
