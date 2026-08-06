@@ -17,9 +17,9 @@ const NAV = [
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="flex min-h-dvh bg-neutral-100 text-neutral-900">
+    <div class="flex min-h-dvh bg-neutral-950 text-neutral-100">
       <!-- Sidebar -->
-      <aside class="fixed inset-y-0 left-0 z-20 flex w-60 flex-col bg-neutral-950 text-neutral-400">
+      <aside class="fixed inset-y-0 left-0 z-20 flex w-60 flex-col border-r border-neutral-800 bg-neutral-950 text-neutral-400">
         <div class="flex h-14 items-center gap-2 px-5">
           <span class="flex size-7 items-center justify-center rounded-md bg-white text-xs font-bold text-neutral-950">A</span>
           <span class="text-sm font-semibold tracking-wide text-white">Atelier Admin</span>
@@ -27,7 +27,7 @@ const NAV = [
         <nav class="mt-2 flex-1 space-y-1 px-3" aria-label="Admin sections">
           @for (item of nav; track item.path) {
             <a [routerLink]="item.path"
-              routerLinkActive="bg-neutral-800 text-white"
+              routerLinkActive="bg-neutral-800 text-white shadow-[inset_3px_0_0_0_#7c9cc9]"
               [routerLinkActiveOptions]="{ exact: item.path.endsWith('/dashboard') }"
               class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-800 hover:text-white"
             >
@@ -59,9 +59,9 @@ const NAV = [
 
       <!-- Main column -->
       <div class="ml-60 flex min-h-dvh flex-1 flex-col">
-        <header class="flex h-14 shrink-0 items-center justify-between border-b border-neutral-200 bg-white px-6">
-          <h1 class="text-sm font-semibold text-neutral-900">{{ title() }}</h1>
-          <a routerLink="/" class="flex items-center gap-1.5 text-xs font-medium text-neutral-500 transition-colors hover:text-neutral-900">
+        <header class="flex h-14 shrink-0 items-center justify-between border-b border-neutral-800 bg-neutral-900 px-6">
+          <h1 class="text-sm font-semibold text-neutral-100">{{ title() }}</h1>
+          <a routerLink="/" class="flex items-center gap-1.5 text-xs font-medium text-neutral-400 transition-colors hover:text-neutral-100">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-3.5" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12.5 15 8 10.5 12.5 6" />
             </svg>
