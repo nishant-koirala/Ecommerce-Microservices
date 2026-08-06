@@ -46,8 +46,15 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
           <a
             routerLink="/admin/products"
             routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
+            [routerLinkActiveOptions]="{ exact: true }"
             class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
           >Products</a>
+          <a
+            routerLink="/admin/categories"
+            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+          >Categories</a>
         </nav>
       </div>
 

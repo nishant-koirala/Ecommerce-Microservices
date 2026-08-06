@@ -8,6 +8,7 @@ export interface CategoryResponse {
 export interface CategoryRequest {
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface ProductResponse {

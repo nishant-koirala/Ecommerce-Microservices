@@ -49,6 +49,12 @@ type StockMode = 'create' | 'restock';
             [routerLinkActiveOptions]="{ exact: true }"
             class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
           >Products</a>
+          <a
+            routerLink="/admin/categories"
+            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+          >Categories</a>
         </nav>
       </div>
 
@@ -71,6 +77,7 @@ type StockMode = 'create' | 'restock';
                     <th class="px-5 py-4 font-semibold">Category</th>
                     <th class="px-5 py-4 text-right font-semibold">Price</th>
                     <th class="px-5 py-4 font-semibold">Stock</th>
+                    <th class="px-5 py-4 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -115,6 +122,20 @@ type StockMode = 'create' | 'restock';
                           </div>
                         }
                       </td>
+                      <td class="px-5 py-3 text-right">
+                        <div class="flex justify-end gap-2">
+                          <app-button size="sm" variant="outline" (click)="editProduct(product)">Edit</app-button>
+                          <app-button
+                            size="sm"
+                            variant="outline"
+                            tone="danger"
+                            [busy]="deleteBusy() === product.id"
+                            (click)="confirmDelete(product)"
+                          >
+                            {{ confirmingDelete() === product.id ? 'Confirm' : 'Delete' }}
+                          </app-button>
+                        </div>
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -125,8 +146,8 @@ type StockMode = 'create' | 'restock';
 
         <!-- Create product form -->
         <aside class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-          <h2 class="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-50">Add a product</h2>
-          <form [formGroup]="form" (ngSubmit)="createProduct()" novalidate class="mt-4 space-y-4">
+          <h2 class="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-50">{{ editingProduct() ? 'Edit product' : 'Add a product' }}</h2>
+          <form [formGroup]="form" (ngSubmit)="submitProduct()" novalidate class="mt-4 space-y-4">
             <div>
               <label for="p-name" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
               <input id="p-name" formControlName="name" type="text" placeholder="Copper Mug Set" class="${INPUT_CLASS}" />
@@ -158,9 +179,14 @@ type StockMode = 'create' | 'restock';
                 }
               </select>
             </div>
-            <app-button type="submit" [busy]="submitting()" [disabled]="submitting() || form.invalid" [fullWidth]="true">
-              Create product
-            </app-button>
+            <div class="flex gap-2">
+              <app-button type="submit" [busy]="submitting()" [disabled]="submitting() || form.invalid" [fullWidth]="true">
+                {{ editingProduct() ? 'Save changes' : 'Create product' }}
+              </app-button>
+              @if (editingProduct()) {
+                <app-button type="button" variant="outline" (click)="cancelEdit()">Cancel</app-button>
+              }
+            </div>
           </form>
         </aside>
       </div>
@@ -182,6 +208,9 @@ export class ProductsAdminComponent implements OnInit {
   readonly stock = signal<Record<number, InventoryResponse | null>>({});
   readonly stockEdit = signal<{ id: number; mode: StockMode } | null>(null);
   readonly stockBusy = signal<number | null>(null);
+  readonly editingProduct = signal<ProductResponse | null>(null);
+  readonly confirmingDelete = signal<number | null>(null);
+  readonly deleteBusy = signal<number | null>(null);
 
   readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -235,7 +264,26 @@ export class ProductsAdminComponent implements OnInit {
       });
   }
 
-  createProduct(): void {
+  editProduct(product: ProductResponse): void {
+    this.editingProduct.set(product);
+    this.stockEdit.set(null);
+    this.confirmingDelete.set(null);
+    this.form.patchValue({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      sku: product.sku,
+      imageUrl: product.imageUrl || '',
+      categoryId: product.category.id,
+    });
+  }
+
+  cancelEdit(): void {
+    this.editingProduct.set(null);
+    this.resetForm();
+  }
+
+  submitProduct(): void {
     if (this.submitting() || this.form.invalid) {
       return;
     }
@@ -248,28 +296,65 @@ export class ProductsAdminComponent implements OnInit {
       imageUrl: raw.imageUrl || null,
       categoryId: raw.categoryId!,
     };
+
+    const editing = this.editingProduct();
     this.submitting.set(true);
-    this.productService
-      .create(request)
+
+    const call = editing
+      ? this.productService.update(editing.id, request)
+      : this.productService.create(request);
+
+    call
       .pipe(takeUntilDestroyed(this.destroyRef), take(1))
       .subscribe({
         next: () => {
           this.submitting.set(false);
-          this.form.reset({
-            name: '',
-            description: '',
-            price: null,
-            sku: '',
-            imageUrl: '',
-            categoryId: null,
-          });
-          this.toast.success('Product created');
+          this.editingProduct.set(null);
+          this.resetForm();
+          this.toast.success(editing ? 'Product updated' : 'Product created');
           this.loadProducts();
         },
         error: () => {
           this.submitting.set(false);
         },
       });
+  }
+
+  confirmDelete(product: ProductResponse): void {
+    if (this.confirmingDelete() !== product.id) {
+      this.confirmingDelete.set(product.id);
+      return;
+    }
+    this.confirmingDelete.set(null);
+    this.deleteBusy.set(product.id);
+    this.productService
+      .remove(product.id)
+      .pipe(takeUntilDestroyed(this.destroyRef), take(1))
+      .subscribe({
+        next: () => {
+          this.deleteBusy.set(null);
+          if (this.editingProduct()?.id === product.id) {
+            this.editingProduct.set(null);
+            this.resetForm();
+          }
+          this.toast.success('Product deleted');
+          this.loadProducts();
+        },
+        error: () => {
+          this.deleteBusy.set(null);
+        },
+      });
+  }
+
+  private resetForm(): void {
+    this.form.reset({
+      name: '',
+      description: '',
+      price: null,
+      sku: '',
+      imageUrl: '',
+      categoryId: null,
+    });
   }
 
   private loadProducts(): void {
@@ -290,6 +375,7 @@ export class ProductsAdminComponent implements OnInit {
         this.products.set(products);
         this.stock.set(record);
         this.loading.set(false);
+        this.confirmingDelete.set(null);
       });
   }
 

@@ -35,6 +35,14 @@ export class ProductService {
     return this.http.post<ProductResponse>(`${API}/products`, request);
   }
 
+  update(id: number, request: ProductRequest): Observable<ProductResponse> {
+    return this.http.put<ProductResponse>(`${API}/products/${id}`, request);
+  }
+
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(`${API}/products/${id}`);
+  }
+
   /** Cached catalog used to enrich cart items without repeated fetches. */
   private readonly catalog$: Observable<ProductResponse[]> = this.http
     .get<ProductResponse[]>(`${API}/products`)
