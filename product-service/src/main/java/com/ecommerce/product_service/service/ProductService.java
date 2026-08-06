@@ -67,6 +67,31 @@ public class ProductService {
         return toResponse(saved);
     }
 
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setSku(request.getSku());
+        product.setImageUrl(request.getImageUrl());
+        product.setCategory(category);
+
+        Product saved = productRepository.save(product);
+        return toResponse(saved);
+    }
+
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Product not found with id: " + id);
+        }
+        productRepository.deleteById(id);
+    }
+
     private ProductResponse toResponse(Product product) {
         CategoryResponse categoryResponse = CategoryResponse.builder()
                 .id(product.getCategory().getId())

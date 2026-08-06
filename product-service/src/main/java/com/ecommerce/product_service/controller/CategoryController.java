@@ -2,6 +2,7 @@ package com.ecommerce.product_service.controller;
 
 import com.ecommerce.product_service.dto.CategoryRequest;
 import com.ecommerce.product_service.dto.CategoryResponse;
+import com.ecommerce.product_service.exception.BadRequestException;
 import com.ecommerce.product_service.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,5 +31,16 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
+        return ResponseEntity.ok(categoryService.updateCategory(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

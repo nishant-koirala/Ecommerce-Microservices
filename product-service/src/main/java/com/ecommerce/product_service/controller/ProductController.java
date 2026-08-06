@@ -44,4 +44,15 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(request));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.ok(productService.updateProduct(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
 }
