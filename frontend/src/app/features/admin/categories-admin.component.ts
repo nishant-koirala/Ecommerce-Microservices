@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Observable, take } from 'rxjs';
 
 import { CategoryResponse, CategoryRequest } from '../../core/models/product';
@@ -16,35 +15,10 @@ const INPUT_CLASS =
 @Component({
  selector: 'app-categories-admin',
  standalone: true,
- imports: [RouterLink, RouterLinkActive, ReactiveFormsModule, ButtonComponent, SkeletonComponent],
+ imports: [ReactiveFormsModule, ButtonComponent, SkeletonComponent],
  template: `
-<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-<nav class="mb-8 text-sm text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
-<a routerLink="/" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Home</a>
-<span class="mx-2 text-neutral-300 dark:text-neutral-600">/</span>
-<span class="text-neutral-900 dark:text-neutral-50">Admin / Categories</span>
-</nav>
-
-<div class="flex flex-wrap items-center justify-between gap-4">
-<h1 class="font-display text-2xl font-semibold text-neutral-900 dark:text-neutral-50 sm:text-3xl">
- Categories</h1>
-<nav class="inline-flex gap-1 rounded-full border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-900" aria-label="Admin sections">
-<a routerLink="/admin/orders"
- routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
- [routerLinkActiveOptions]="{ exact: true }"
- class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-100 dark:hover:text-neutral-100">Orders</a>
-<a routerLink="/admin/products"
- routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
- [routerLinkActiveOptions]="{ exact: true }"
- class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-100 dark:hover:text-neutral-100">Products</a>
-<a routerLink="/admin/categories"
- routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
- [routerLinkActiveOptions]="{ exact: true }"
- class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-100 dark:hover:text-neutral-100">Categories</a>
-</nav>
-</div>
-
-<div class="mt-8 grid items-start gap-8 lg:grid-cols-2">
+<div class="space-y-4">
+<div class="grid items-start gap-8 lg:grid-cols-2">
  <!-- Category list -->
 <section aria-label="Category list">
  @if (loading()) {
@@ -118,7 +92,7 @@ const INPUT_CLASS =
 </form>
 </aside>
 </div>
-</main>
+</div>
  `,
 })
 export class CategoriesAdminComponent implements OnInit {

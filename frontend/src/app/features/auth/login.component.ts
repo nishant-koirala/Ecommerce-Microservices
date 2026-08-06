@@ -122,6 +122,9 @@ export class LoginComponent {
   }
 
   private redirectPath(): string {
+    if (this.auth.isAdmin()) {
+      return '/admin';
+    }
     const redirect = this.route.snapshot.queryParamMap.get('redirect');
     return redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/';
   }

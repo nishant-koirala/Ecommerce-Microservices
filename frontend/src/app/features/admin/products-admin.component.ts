@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Observable, forkJoin, map, switchMap, take } from 'rxjs';
 
 import { CategoryResponse, ProductRequest, ProductResponse } from '../../core/models/product';
@@ -24,41 +23,10 @@ type StockMode = 'create' | 'restock';
 @Component({
   selector: 'app-products-admin',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, ReactiveFormsModule, BadgeComponent, ButtonComponent, SkeletonComponent],
+  imports: [ReactiveFormsModule, BadgeComponent, ButtonComponent, SkeletonComponent],
   template: `
-    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <nav class="mb-8 text-sm text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
-        <a routerLink="/" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Home</a>
-        <span class="mx-2 text-neutral-300 dark:text-neutral-600">/</span>
-        <span class="text-neutral-900 dark:text-neutral-50">Admin / Products</span>
-      </nav>
-
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="font-display text-2xl font-semibold text-neutral-900 dark:text-neutral-50 sm:text-3xl">
-          Products
-        </h1>
-        <nav class="inline-flex gap-1 rounded-full border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-900" aria-label="Admin sections">
-          <a
-            routerLink="/admin/orders"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Orders</a>
-          <a
-            routerLink="/admin/products"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Products</a>
-          <a
-            routerLink="/admin/categories"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Categories</a>
-        </nav>
-      </div>
-
-      <div class="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_340px]">
+    <div class="space-y-4">
+      <div class="grid items-start gap-8 lg:grid-cols-[1fr_340px]">
         <!-- Product list -->
         <section aria-label="Product list">
           @if (loading()) {
@@ -190,7 +158,7 @@ type StockMode = 'create' | 'restock';
           </form>
         </aside>
       </div>
-    </main>
+    </div>
   `,
 })
 export class ProductsAdminComponent implements OnInit {

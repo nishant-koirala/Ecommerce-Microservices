@@ -1,13 +1,23 @@
 import { Routes } from '@angular/router';
 
 import { adminGuard } from '../../core/guards/admin.guard';
+import { AdminLayoutComponent } from './admin-layout.component';
 import { CategoriesAdminComponent } from './categories-admin.component';
+import { DashboardAdminComponent } from './dashboard-admin.component';
 import { OrdersAdminComponent } from './orders-admin.component';
 import { ProductsAdminComponent } from './products-admin.component';
 
 export const adminRoutes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'orders' },
-  { path: 'orders', component: OrdersAdminComponent, canActivate: [adminGuard] },
-  { path: 'products', component: ProductsAdminComponent, canActivate: [adminGuard] },
-  { path: 'categories', component: CategoriesAdminComponent, canActivate: [adminGuard] },
+  {
+    path: '',
+    component: AdminLayoutComponent,
+    canActivate: [adminGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: 'dashboard', component: DashboardAdminComponent },
+      { path: 'orders', component: OrdersAdminComponent },
+      { path: 'products', component: ProductsAdminComponent },
+      { path: 'categories', component: CategoriesAdminComponent },
+    ],
+  },
 ];

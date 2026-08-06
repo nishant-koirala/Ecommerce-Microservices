@@ -1,6 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Observable, take } from 'rxjs';
 
 import { OrderResponse, OrderStatus } from '../../core/models/order';
@@ -23,41 +22,9 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
 @Component({
   selector: 'app-orders-admin',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, BadgeComponent, ButtonComponent, SkeletonComponent],
+  imports: [BadgeComponent, ButtonComponent, SkeletonComponent],
   template: `
-    <main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-      <nav class="mb-8 text-sm text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
-        <a routerLink="/" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Home</a>
-        <span class="mx-2 text-neutral-300 dark:text-neutral-600">/</span>
-        <span class="text-neutral-900 dark:text-neutral-50">Admin / Orders</span>
-      </nav>
-
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="font-display text-2xl font-semibold text-neutral-900 dark:text-neutral-50 sm:text-3xl">
-          Orders
-        </h1>
-        <nav class="inline-flex gap-1 rounded-full border border-neutral-200 bg-white p-1 dark:border-neutral-800 dark:bg-neutral-900" aria-label="Admin sections">
-          <a
-            routerLink="/admin/orders"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Orders</a>
-          <a
-            routerLink="/admin/products"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Products</a>
-          <a
-            routerLink="/admin/categories"
-            routerLinkActive="bg-neutral-900 text-white dark:bg-white dark:text-neutral-950"
-            [routerLinkActiveOptions]="{ exact: true }"
-            class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
-          >Categories</a>
-        </nav>
-      </div>
-
+    <div class="space-y-4">
       @if (loading()) {
         <div class="mt-8 flex flex-col gap-4">
           <app-skeleton shape="h-16 w-full rounded-2xl" />
@@ -109,7 +76,7 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
           </table>
         </div>
       }
-    </main>
+    </div>
   `,
 })
 export class OrdersAdminComponent implements OnInit {
