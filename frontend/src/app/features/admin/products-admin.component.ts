@@ -13,6 +13,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { formatPrice } from '../../core/utils/format';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ImageUploadControl } from '../../shared/components/image-upload/image-upload.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 
 const INPUT_CLASS =
@@ -24,7 +25,7 @@ type SortKey = 'id' | 'name' | 'sku' | 'price';
 @Component({
   selector: 'app-products-admin',
   standalone: true,
-  imports: [ReactiveFormsModule, BadgeComponent, ButtonComponent, SkeletonComponent],
+  imports: [ReactiveFormsModule, BadgeComponent, ButtonComponent, ImageUploadControl, SkeletonComponent],
   template: `
     <div class="space-y-4">
       <div class="grid items-start gap-8 lg:grid-cols-[1fr_340px]">
@@ -166,8 +167,8 @@ type SortKey = 'id' | 'name' | 'sku' | 'price';
               </div>
             </div>
             <div>
-              <label for="p-image" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Image URL</label>
-              <input id="p-image" formControlName="imageUrl" type="url" placeholder="https://images.unsplash.com/photo-…" class="${INPUT_CLASS}" />
+              <label for="p-image" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Image</label>
+              <app-image-upload id="p-image" formControlName="imageUrl" />
             </div>
             <div>
               <label for="p-category" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Category</label>

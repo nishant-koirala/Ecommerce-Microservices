@@ -71,6 +71,12 @@ heapdump.*
 *.swo
 *~
 
+# Uploaded product/category images
+/uploads/
+
+# Background JVM logs at repo root
+/logs-*.out
+
 # Node (if any frontend modules end up in the project)
 node_modules/
 npm-debug.log*

@@ -7,6 +7,7 @@ import { CategoryResponse, CategoryRequest } from '../../core/models/product';
 import { CategoryService } from '../../core/services/category.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { ImageUploadControl } from '../../shared/components/image-upload/image-upload.component';
 import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.component';
 
 const INPUT_CLASS =
@@ -15,7 +16,7 @@ const INPUT_CLASS =
 @Component({
  selector: 'app-categories-admin',
  standalone: true,
- imports: [ReactiveFormsModule, ButtonComponent, SkeletonComponent],
+ imports: [ReactiveFormsModule, ButtonComponent, ImageUploadControl, SkeletonComponent],
  template: `
 <div class="space-y-4">
 <div class="grid items-start gap-8 lg:grid-cols-2">
@@ -101,8 +102,8 @@ Name {{ sortIndicator('name') }}
 <textarea id="c-description" formControlName="description" rows="3" placeholder="Short description…" class="${INPUT_CLASS}"></textarea>
 </div>
 <div>
-<label for="c-image" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Image URL</label>
-<input id="c-image" formControlName="imageUrl" type="url" placeholder="https://images.unsplash.com/photo-…" class="${INPUT_CLASS}" />
+<label for="c-image" class="mb-1.5 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Image</label>
+<app-image-upload id="c-image" formControlName="imageUrl" />
 </div>
 <div class="flex gap-2">
 <app-button type="submit" [busy]="submitting()" [disabled]="submitting() || form.invalid" [fullWidth]="true">

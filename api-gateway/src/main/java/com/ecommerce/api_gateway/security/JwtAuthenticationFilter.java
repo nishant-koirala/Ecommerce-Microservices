@@ -72,7 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return PATH_MATCHER.match("/api/v1/products/**", path)
                 || PATH_MATCHER.match("/api/v1/categories/**", path)
-                || PATH_MATCHER.match("/api/v1/inventory/**", path);
+                || PATH_MATCHER.match("/api/v1/inventory/**", path)
+                || PATH_MATCHER.match("/api/v1/uploads/**", path);
     }
 
     private boolean isWrite(String method) {

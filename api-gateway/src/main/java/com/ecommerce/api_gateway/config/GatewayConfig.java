@@ -19,7 +19,9 @@ public class GatewayConfig {
                 .add(serviceRoute("user_route", "http://localhost:8091",
                         GatewayRequestPredicates.path("/api/v1/users/**", "/api/v1/auth/**")))
                 .add(serviceRoute("product_route", "http://localhost:8092",
-                        GatewayRequestPredicates.path("/api/v1/products/**", "/api/v1/categories/**")))
+                        GatewayRequestPredicates.path("/api/v1/products/**", "/api/v1/categories/**", "/api/v1/uploads/**")))
+                .add(serviceRoute("images_route", "http://localhost:8092",
+                        GatewayRequestPredicates.path("/images/**")))
                 .add(serviceRoute("inventory_route", "http://localhost:8093",
                         GatewayRequestPredicates.path("/api/v1/inventory/**")))
                 .add(serviceRoute("cart_route", "http://localhost:8094",
