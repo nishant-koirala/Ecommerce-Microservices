@@ -22,4 +22,8 @@ public class CreateOrderRequest {
 
     @Valid
     private List<CreateOrderItemRequest> items;
+
+    /** Optional — only validated when present (kept nullable for older callers). */
+    @Valid
+    private ShippingAddress shippingAddress;
 }

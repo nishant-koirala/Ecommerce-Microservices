@@ -264,14 +264,14 @@ export class CheckoutComponent {
       return;
     }
     this.placing.set(true);
-    this.storage.setObject(ADDRESS_KEY, this.addressForm.getRawValue());
+    const address = this.addressForm.getRawValue() as ShippingAddress;
+    this.storage.setObject(ADDRESS_KEY, address);
 
-    this.cart.checkout().subscribe({
+    this.cart.checkout(address).subscribe({
       next: (result) => {
         this.placing.set(false);
-        this.router.navigate(['/orders', result.orderId], {
-          state: { address: this.addressForm.getRawValue() },
-        });
+        // Address persists on the order server-side; confirmation reads it from the API.
+        this.router.navigate(['/orders', result.orderId]);
       },
       error: () => {
         this.placing.set(false);

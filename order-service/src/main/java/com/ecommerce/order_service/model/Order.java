@@ -33,6 +33,16 @@ public class Order {
 
     private Long paymentId;
 
+    // Shipping address (nullable — old orders have null). Individual columns,
+    // not @Embedded, so ddl-auto:update adds them to the existing table cleanly.
+    private String shippingFullName;
+    private String shippingAddress1;
+    private String shippingAddress2;
+    private String shippingCity;
+    private String shippingState;
+    private String shippingZip;
+    private String shippingCountry;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

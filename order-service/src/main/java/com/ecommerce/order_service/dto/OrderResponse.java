@@ -23,6 +23,7 @@ public class OrderResponse {
     private String status;
     private BigDecimal totalAmount;
     private Long paymentId;
+    private ShippingAddress shippingAddress;
     private LocalDateTime createdAt;
     private List<OrderItemResponse> items;
 }

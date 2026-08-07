@@ -1,4 +1,4 @@
-/** Shipping address collected in the checkout UI. UI-only — the backend order has no address fields. */
+/** Shipping address collected in the checkout UI and persisted on the order. */
 export interface ShippingAddress {
   fullName: string;
   address1: string;

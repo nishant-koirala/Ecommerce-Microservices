@@ -3,7 +3,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ProductResponse } from '../models/product';
 import {
   AddToCartRequest,
   CartItem,
@@ -11,6 +10,8 @@ import {
   CheckoutResponse,
   UpdateQuantityRequest,
 } from '../models/cart';
+import { ShippingAddress } from '../models/checkout';
+import { ProductResponse } from '../models/product';
 import { AuthService } from './auth.service';
 import { ProductService } from './product.service';
 import { StorageService } from '../utils/storage';
@@ -114,7 +115,7 @@ export class CartService {
     }
   }
 
-  checkout(): Observable<CheckoutResponse> {
+  checkout(address: ShippingAddress): Observable<CheckoutResponse> {
     const user = this.auth.currentUser();
     if (!user) {
       return throwError(() => new Error('Sign in to checkout'));
@@ -126,7 +127,7 @@ export class CartService {
     return this.http
       .post<CheckoutResponse>(
         `${API}/cart/${user.id}/checkout`,
-        null,
+        address,
         { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) },
       )
       .pipe(

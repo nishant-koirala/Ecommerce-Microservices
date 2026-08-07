@@ -69,6 +69,7 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
                     </button>
                   </th>
                   <th class="px-5 py-4 font-semibold">Customer</th>
+                  <th class="px-5 py-4 font-semibold">Ship to</th>
                   <th class="px-5 py-4 font-semibold">
                     <button type="button" (click)="sortBy('createdAt')" class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-neutral-900 dark:hover:text-neutral-50">
                       Placed {{ sortIndicator('createdAt') }}
@@ -89,6 +90,13 @@ const STATUS_TONE: Record<OrderStatus, BadgeTone> = {
                 <tr class="text-neutral-700 dark:text-neutral-200">
                   <td class="px-5 py-4 font-medium text-neutral-900 dark:text-neutral-50">#{{ order.id }}</td>
                   <td class="px-5 py-4">{{ order.customerName ?? 'Customer #' + order.userId }}</td>
+                  <td class="px-5 py-4 whitespace-nowrap text-neutral-500 dark:text-neutral-400">
+                    @if (order.shippingAddress) {
+                      {{ order.shippingAddress.city }}, {{ order.shippingAddress.state }}
+                    } @else {
+                      —
+                    }
+                  </td>
                   <td class="px-5 py-4 whitespace-nowrap text-neutral-500 dark:text-neutral-400">{{ formatDate(order.createdAt) }}</td>
                   <td class="px-5 py-4">{{ itemCount(order) }}</td>
                   <td class="px-5 py-4 text-right font-semibold text-neutral-900 dark:text-neutral-50">{{ formatPrice(order.totalAmount) }}</td>

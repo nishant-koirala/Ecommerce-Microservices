@@ -1,3 +1,5 @@
+import { ShippingAddress } from './checkout';
+
 export type OrderStatus =
   | 'PENDING'
   | 'CONFIRMED'
@@ -31,6 +33,7 @@ export interface OrderResponse {
   status: OrderStatus;
   totalAmount: number;
   paymentId: number | null;
+  shippingAddress: ShippingAddress | null;
   createdAt: string;
   items: OrderItemResponse[];
 }

@@ -5,6 +5,7 @@ import com.ecommerce.cart_service.client.UserServiceClient;
 import com.ecommerce.cart_service.client.dto.CreateOrderItemRequest;
 import com.ecommerce.cart_service.client.dto.CreateOrderRequest;
 import com.ecommerce.cart_service.client.dto.OrderResponse;
+import com.ecommerce.cart_service.client.dto.ShippingAddress;
 import com.ecommerce.cart_service.client.dto.UserDto;
 import com.ecommerce.cart_service.dto.AddToCartRequest;
 import com.ecommerce.cart_service.dto.CartItemResponse;
@@ -86,7 +87,8 @@ public class CartService {
         cartItemRepository.delete(cartItem);
     }
 
-    public CheckoutResponse checkout(Long userId, String userEmail, String idempotencyKey) {
+    public CheckoutResponse checkout(Long userId, String userEmail, String idempotencyKey,
+                                     ShippingAddress address) {
         UserDto owner;
         try {
             owner = userServiceClient.getUserByEmail(userEmail);
@@ -111,6 +113,7 @@ public class CartService {
                                 .quantity(item.getQuantity())
                                 .build())
                         .collect(Collectors.toList()))
+                .shippingAddress(address)
                 .build();
 
         OrderResponse order = orderServiceClient.createOrder(request, hasKey ? idempotencyKey.trim() : null);

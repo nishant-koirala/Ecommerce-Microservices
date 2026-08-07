@@ -13,6 +13,7 @@ import com.ecommerce.order_service.dto.CreateOrderItemRequest;
 import com.ecommerce.order_service.dto.CreateOrderRequest;
 import com.ecommerce.order_service.dto.OrderItemResponse;
 import com.ecommerce.order_service.dto.OrderResponse;
+import com.ecommerce.order_service.dto.ShippingAddress;
 import com.ecommerce.order_service.exception.ForbiddenException;
 import com.ecommerce.order_service.exception.OrderProcessingException;
 import com.ecommerce.order_service.exception.ResourceNotFoundException;
@@ -294,6 +295,13 @@ public class OrderService {
                 totalAmount = totalAmount.add(
                     product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
             }
+
+            // Shipping: free over $75, else flat $6.95 — mirrors the frontend
+            // checkout summary so totalAmount is the true order total.
+            totalAmount = totalAmount.add(
+                totalAmount.compareTo(BigDecimal.valueOf(75)) >= 0
+                        ? BigDecimal.ZERO
+                        : BigDecimal.valueOf(6.95));
         } catch (OrderProcessingException e) {
             releaseAll(successfulReservations);
             if (claim != null) {
@@ -309,6 +317,7 @@ public class OrderService {
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
                 .build();
+        applyAddress(order, request.getShippingAddress());
 
         for (OrderItem item : reservedItems) {
             order.addItem(item);
@@ -358,7 +367,8 @@ public class OrderService {
             }
             releaseAll(successfulReservations);
             persistFailedOrder(request.getUserId(), totalAmount,
-                    payment != null ? payment.getId() : null, reservedItems);
+                    payment != null ? payment.getId() : null, reservedItems,
+                    request.getShippingAddress());
             // Free the key so a retry can re-run the saga; the rollback of this method's
             // main transaction would otherwise leave the claim (orderId null) in place.
             if (claim != null) {
@@ -371,7 +381,7 @@ public class OrderService {
     }
 
     private void persistFailedOrder(Long userId, BigDecimal totalAmount, Long paymentId,
-                                    List<OrderItem> items) {
+                                    List<OrderItem> items, ShippingAddress shippingAddress) {
         // Runs in a separate transaction so the PAYMENT_FAILED record survives the
         // rollback triggered when createOrder rethrows the RuntimeException below.
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
@@ -383,6 +393,7 @@ public class OrderService {
                     .totalAmount(totalAmount)
                     .paymentId(paymentId)
                     .build();
+            applyAddress(failedOrder, shippingAddress);
             for (OrderItem item : items) {
                 failedOrder.addItem(OrderItem.builder()
                         .productId(item.getProductId())
@@ -424,8 +435,37 @@ public class OrderService {
                 .status(order.getStatus().name())
                 .totalAmount(order.getTotalAmount())
                 .paymentId(order.getPaymentId())
+                .shippingAddress(toShippingAddress(order))
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
+                .build();
+    }
+
+    private static void applyAddress(Order order, ShippingAddress address) {
+        if (address == null) {
+            return;
+        }
+        order.setShippingFullName(address.getFullName());
+        order.setShippingAddress1(address.getAddress1());
+        order.setShippingAddress2(address.getAddress2());
+        order.setShippingCity(address.getCity());
+        order.setShippingState(address.getState());
+        order.setShippingZip(address.getZip());
+        order.setShippingCountry(address.getCountry());
+    }
+
+    private static ShippingAddress toShippingAddress(Order order) {
+        if (order.getShippingFullName() == null) {
+            return null;
+        }
+        return ShippingAddress.builder()
+                .fullName(order.getShippingFullName())
+                .address1(order.getShippingAddress1())
+                .address2(order.getShippingAddress2())
+                .city(order.getShippingCity())
+                .state(order.getShippingState())
+                .zip(order.getShippingZip())
+                .country(order.getShippingCountry())
                 .build();
     }
 

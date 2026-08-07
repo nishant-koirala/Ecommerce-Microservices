@@ -1,5 +1,6 @@
 package com.ecommerce.cart_service.controller;
 
+import com.ecommerce.cart_service.client.dto.ShippingAddress;
 import com.ecommerce.cart_service.dto.AddToCartRequest;
 import com.ecommerce.cart_service.dto.CartItemResponse;
 import com.ecommerce.cart_service.dto.CheckoutResponse;
@@ -37,8 +38,9 @@ public class CartController {
     @PostMapping("/{userId}/checkout")
     public ResponseEntity<CheckoutResponse> checkout(@PathVariable Long userId,
                                                      @RequestHeader("X-User-Email") String userEmail,
-                                                     @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-        return ResponseEntity.ok(cartService.checkout(userId, userEmail, idempotencyKey));
+                                                     @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+                                                     @RequestBody(required = false) ShippingAddress address) {
+        return ResponseEntity.ok(cartService.checkout(userId, userEmail, idempotencyKey, address));
     }
 
     @PutMapping("/{userId}/{productId}")

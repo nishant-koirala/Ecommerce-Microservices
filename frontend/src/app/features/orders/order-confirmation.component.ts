@@ -242,11 +242,7 @@ export class OrderConfirmationComponent implements OnInit {
 
   formatPrice = formatPrice;
 
-  constructor() {
-    const nav = this.router.getCurrentNavigation();
-    const state = nav?.extras.state as { address?: ShippingAddress } | null;
-    this.address.set(state?.address ?? null);
-  }
+  constructor() {}
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -258,6 +254,8 @@ export class OrderConfirmationComponent implements OnInit {
       this.ordersService.getById(id).pipe(take(1)).subscribe({
         next: (order) => {
           this.orderSignal.set(order);
+          // Address comes from the persisted order (refresh-safe), not router state.
+          this.address.set(order.shippingAddress ?? null);
           this.loading.set(false);
         },
         error: () => {
