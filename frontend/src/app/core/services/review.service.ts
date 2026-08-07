@@ -20,6 +20,11 @@ export class ReviewService {
     return this.http.get<ReviewResponse[]>(`${API}/reviews/product/${productId}`);
   }
 
+  /** The signed-in user's own reviews (ownership enforced server-side). */
+  getByUser(userId: number): Observable<ReviewResponse[]> {
+    return this.http.get<ReviewResponse[]>(`${API}/reviews/user/${userId}`);
+  }
+
   create(request: ReviewRequest, context?: HttpContext): Observable<ReviewResponse> {
     return this.http.post<ReviewResponse>(`${API}/reviews`, request, { context });
   }

@@ -56,6 +56,24 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getByUser(Long userId, String userEmail) {
+        // Endpoint is public at the gateway; the ownership check below rejects
+        // unauthenticated callers (no X-User-Email header) with a clean 403.
+        UserDto caller;
+        try {
+            caller = userServiceClient.getUserByEmail(userEmail);
+        } catch (Exception e) {
+            caller = null;
+        }
+        if (caller == null || !caller.getId().equals(userId)) {
+            throw new ForbiddenException("You are not allowed to view this user's reviews");
+        }
+        return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public ReviewResponse upsert(ReviewRequest request, String userEmail) {
         UserDto caller = verifyOwner(request.getUserId(), userEmail);

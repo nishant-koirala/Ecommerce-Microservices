@@ -202,6 +202,16 @@ import { WishlistService } from '../../../core/services/wishlist.service';
                       </span>
                     }
                   </a>
+                  <a
+                    routerLink="/account/reviews"
+                    (click)="menuOpen.set(false)"
+                    class="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" class="size-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 1.5l2.47 5.01 5.53.8-4 3.9.95 5.52L10 14.11l-4.95 2.6.95-5.52-4-3.9 5.53-.8L10 1.5z" />
+                    </svg>
+                    My reviews
+                  </a>
                   @if (auth.isAdmin()) {
                     <a
                       routerLink="/admin/orders"
@@ -311,6 +321,13 @@ import { WishlistService } from '../../../core/services/wishlist.service';
                 class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
               >
                 Wishlist @if (wishlist.count() > 0) { ({{ wishlist.count() }}) }
+              </a>
+              <a
+                routerLink="/account/reviews"
+                (click)="mobileOpen.set(false)"
+                class="mt-1 flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:border-neutral-700 dark:text-neutral-200"
+              >
+                My reviews
               </a>
               @if (auth.isAdmin()) {
                 <a

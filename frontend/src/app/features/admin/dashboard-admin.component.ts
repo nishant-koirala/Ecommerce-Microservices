@@ -1,10 +1,12 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, take } from 'rxjs';
+import { forkJoin, map, switchMap, take } from 'rxjs';
 
+import { InventoryResponse } from '../../core/models/inventory';
 import { OrderResponse, OrderStatus } from '../../core/models/order';
 import { ProductResponse } from '../../core/models/product';
+import { InventoryService } from '../../core/services/inventory.service';
 import { OrderService } from '../../core/services/order.service';
 import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -216,7 +218,14 @@ function pct(cur: number, prior: number): number | null {
 
       <!-- Top products -->
       <section class="${CARD_CLASS}">
-        <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500">Top products by price</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          Top products by price
+          @if (lowStockCount() > 0) {
+            <span class="ml-2 inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+              {{ lowStockCount() }} low stock
+            </span>
+          }
+        </h2>
         <table class="mt-3 w-full text-sm">
           <thead>
             <tr class="text-left text-xs uppercase tracking-wider text-neutral-500">
@@ -228,7 +237,8 @@ function pct(cur: number, prior: number): number | null {
           </thead>
           <tbody class="divide-y divide-neutral-800">
             @for (product of topProducts(); track product.id) {
-              <tr class="text-neutral-300 transition-colors hover:bg-neutral-800/40">
+              <tr class="text-neutral-300 transition-colors hover:bg-neutral-800/40"
+                [class.bg-amber-900/20]="isLowStock(product.id)">
                 <td class="py-2.5 pr-4 font-medium text-neutral-50">{{ product.name }}</td>
                 <td class="py-2.5 pr-4 text-xs text-neutral-500">{{ product.sku }}</td>
                 <td class="py-2.5 pr-4 text-neutral-400">{{ product.category.name }}</td>
@@ -251,6 +261,7 @@ function pct(cur: number, prior: number): number | null {
 export class DashboardAdminComponent implements OnInit {
   private readonly ordersService = inject(OrderService);
   private readonly productService = inject(ProductService);
+  private readonly inventoryService = inject(InventoryService);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -279,6 +290,17 @@ export class DashboardAdminComponent implements OnInit {
   readonly donutSegments = computed<DonutSegment[]>(() => this.buildDonut(this.statusBreakdown()));
   readonly topProducts = computed(() => [...this.products()].sort((a, b) => b.price - a.price).slice(0, 5));
   readonly topProduct = computed(() => this.topProducts()[0] ?? null);
+
+  // Low-stock: free (unreserved) quantity below the threshold, from the batch inventory fetch.
+  readonly inventoryData = signal<Record<number, InventoryResponse>>({});
+  readonly lowStockProducts = computed(() => {
+    const inv = this.inventoryData();
+    return this.products().filter((p) => {
+      const stock = inv[p.id];
+      return stock != null && stock.quantityAvailable - stock.quantityReserved < 5;
+    });
+  });
+  readonly lowStockCount = computed(() => this.lowStockProducts().length);
 
   // 14-day window deltas (current vs prior, same orders() signal — no extra API calls)
   readonly windows = computed(() => this.splitWindows(this.orders()));
@@ -334,11 +356,20 @@ export class DashboardAdminComponent implements OnInit {
       orders: this.ordersService.listAll(),
       products: this.productService.getAll(),
     })
-      .pipe(takeUntilDestroyed(this.destroyRef), take(1))
+      .pipe(
+        switchMap(({ orders, products }) =>
+          this.inventoryService.getBatch(products.map((p) => p.id)).pipe(
+            map((inventory) => ({ orders, products, inventory })),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+        take(1),
+      )
       .subscribe({
-        next: ({ orders, products }) => {
+        next: ({ orders, products, inventory }) => {
           this.orders.set(orders);
           this.products.set(products);
+          this.inventoryData.set(inventory);
           this.loading.set(false);
         },
         error: () => {
@@ -346,6 +377,11 @@ export class DashboardAdminComponent implements OnInit {
           this.toast.error('Could not load dashboard data.');
         },
       });
+  }
+
+  isLowStock(productId: number): boolean {
+    const stock = this.inventoryData()[productId];
+    return stock != null && stock.quantityAvailable - stock.quantityReserved < 5;
   }
 
   onChartMove(event: PointerEvent): void {

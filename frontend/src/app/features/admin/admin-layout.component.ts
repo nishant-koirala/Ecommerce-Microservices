@@ -10,6 +10,7 @@ const NAV = [
   { path: '/admin/orders', label: 'Orders', icon: 'package' },
   { path: '/admin/products', label: 'Products', icon: 'cube' },
   { path: '/admin/categories', label: 'Categories', icon: 'folder' },
+  { path: '/admin/users', label: 'Users', icon: 'users' },
 ] as const;
 
 @Component({
@@ -44,6 +45,9 @@ const NAV = [
                   }
                   @case ('folder') {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.5 5.5h4.4l1.6 1.5h9v8h-15V5.5Z" />
+                  }
+                  @case ('users') {
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-5 6.5c0-2.4 2.1-4 5-4s5 1.6 5 4" />
                   }
                 }
               </svg>
@@ -96,6 +100,7 @@ export class AdminLayoutComponent {
     if (url.includes('/orders')) return 'Orders';
     if (url.includes('/products')) return 'Products';
     if (url.includes('/categories')) return 'Categories';
+    if (url.includes('/users')) return 'Users';
     return 'Dashboard';
   }
 }

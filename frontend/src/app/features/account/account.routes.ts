@@ -4,6 +4,7 @@ import { authGuard } from '../../core/guards/auth.guard';
 import { AccountComponent } from './account.component';
 import { NotificationsComponent } from './notifications.component';
 import { OrdersComponent } from './orders.component';
+import { ReviewsComponent } from './reviews.component';
 import { WishlistComponent } from './wishlist.component';
 
 export const accountRoutes: Routes = [
@@ -11,4 +12,5 @@ export const accountRoutes: Routes = [
   { path: 'orders', component: OrdersComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'wishlist', component: WishlistComponent, canActivate: [authGuard] },
+  { path: 'reviews', component: ReviewsComponent, canActivate: [authGuard] },
 ];

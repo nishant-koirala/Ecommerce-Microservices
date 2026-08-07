@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/inventory")
 public class InventoryController {
@@ -29,6 +32,11 @@ public class InventoryController {
     @GetMapping("/product/{productId}")
     public ResponseEntity<InventoryResponse> getInventoryByProductId(@PathVariable Long productId) {
         return ResponseEntity.ok(inventoryService.getInventoryByProductId(productId));
+    }
+
+    @GetMapping("/batch")
+    public ResponseEntity<Map<Long, InventoryResponse>> getBatch(@RequestParam("productIds") List<Long> productIds) {
+        return ResponseEntity.ok(inventoryService.getBatchByProductIds(productIds));
     }
 
     @PostMapping("/reserve")

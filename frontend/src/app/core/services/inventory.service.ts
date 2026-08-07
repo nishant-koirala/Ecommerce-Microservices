@@ -38,4 +38,17 @@ export class InventoryService {
   deleteByProduct(productId: number): Observable<void> {
     return this.http.delete<void>(`${API}/inventory/product/${productId}`);
   }
+
+  /** Stock for many products in one call. */
+  getBatch(productIds: number[]): Observable<Record<number, InventoryResponse>> {
+    if (productIds.length === 0) {
+      return of({});
+    }
+    return this.http
+      .get<Record<number, InventoryResponse>>(`${API}/inventory/batch`, {
+        params: { productIds: productIds.join(',') },
+        context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true),
+      })
+      .pipe(catchError(() => of({})));
+  }
 }

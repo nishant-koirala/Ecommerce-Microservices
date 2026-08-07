@@ -6,6 +6,7 @@ import { CategoriesAdminComponent } from './categories-admin.component';
 import { DashboardAdminComponent } from './dashboard-admin.component';
 import { OrdersAdminComponent } from './orders-admin.component';
 import { ProductsAdminComponent } from './products-admin.component';
+import { UsersAdminComponent } from './users-admin.component';
 
 export const adminRoutes: Routes = [
   {
@@ -18,6 +19,7 @@ export const adminRoutes: Routes = [
       { path: 'orders', component: OrdersAdminComponent },
       { path: 'products', component: ProductsAdminComponent },
       { path: 'categories', component: CategoriesAdminComponent },
+      { path: 'users', component: UsersAdminComponent },
     ],
   },
 ];

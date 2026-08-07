@@ -54,6 +54,14 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client
   },
   {
+    path: 'admin/users',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'account/reviews',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender
   }

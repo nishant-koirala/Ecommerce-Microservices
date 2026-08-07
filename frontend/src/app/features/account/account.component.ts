@@ -90,6 +90,15 @@ import { LinkButtonComponent } from '../../shared/components/button/link-button.
               <app-link-button routerLink="/account/orders" [fullWidth]="true">My orders</app-link-button>
             </div>
           </div>
+          <div class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
+            <h2 class="text-xs font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">Reviews</h2>
+            <p class="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+              See the reviews you've left on products.
+            </p>
+            <div class="mt-5">
+              <app-link-button routerLink="/account/reviews" [fullWidth]="true">My reviews</app-link-button>
+            </div>
+          </div>
         </aside>
       </div>
     </main>

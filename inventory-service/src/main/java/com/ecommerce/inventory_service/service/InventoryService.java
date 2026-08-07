@@ -14,6 +14,10 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 public class InventoryService {
 
@@ -50,6 +54,18 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("No inventory found for product id: " + productId));
         inventoryRepository.delete(inventory);
+    }
+
+    public Map<Long, InventoryResponse> getBatchByProductIds(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return Map.of();
+        }
+        return inventoryRepository.findByProductIdIn(productIds).stream()
+                .collect(Collectors.toMap(
+                        Inventory::getProductId,
+                        this::toResponse,
+                        (a, b) -> a  // productId is unique; merge is just a safety net
+                ));
     }
 
     @Retryable(

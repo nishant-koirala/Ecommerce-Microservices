@@ -32,6 +32,12 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getSummary(productIds));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ReviewResponse>> getByUser(@PathVariable Long userId,
+                                                          @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(reviewService.getByUser(userId, userEmail));
+    }
+
     @PostMapping
     public ResponseEntity<ReviewResponse> upsert(@Valid @RequestBody ReviewRequest request,
                                                  @RequestHeader("X-User-Email") String userEmail) {
