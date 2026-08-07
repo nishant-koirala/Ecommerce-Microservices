@@ -45,6 +45,13 @@ public class InventoryService {
         return toResponse(inventory);
     }
 
+    @Transactional
+    public void deleteByProductId(Long productId) {
+        Inventory inventory = inventoryRepository.findByProductId(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("No inventory found for product id: " + productId));
+        inventoryRepository.delete(inventory);
+    }
+
     @Retryable(
         retryFor = ObjectOptimisticLockingFailureException.class,
         maxAttempts = 5,

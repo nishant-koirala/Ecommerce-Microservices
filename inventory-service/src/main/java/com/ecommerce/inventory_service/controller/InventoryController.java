@@ -50,4 +50,10 @@ public class InventoryController {
     public ResponseEntity<InventoryResponse> confirmDeduction(@Valid @RequestBody ReserveStockRequest request) {
         return ResponseEntity.ok(inventoryService.confirmDeduction(request));
     }
+
+    @DeleteMapping("/product/{productId}")
+    public ResponseEntity<Void> deleteByProductId(@PathVariable Long productId) {
+        inventoryService.deleteByProductId(productId);
+        return ResponseEntity.noContent().build();
+    }
 }

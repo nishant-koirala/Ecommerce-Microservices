@@ -63,13 +63,13 @@ import { LinkButtonComponent } from '../../../../shared/components/button/link-b
         <!-- Asymmetric image collage -->
         <div class="relative h-[440px] lg:h-[540px]" aria-hidden="true">
           <img
-            src="https://picsum.photos/seed/atelier-hero/720/920"
+            src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=720&h=920&q=80"
             alt=""
             class="animate-float absolute right-0 top-0 h-[88%] w-3/4 rounded-[2rem] object-cover shadow-card"
             fetchpriority="high"
           />
           <img
-            src="https://picsum.photos/seed/atelier-hero-accent/420/420"
+            src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=420&h=420&q=80"
             alt=""
             class="animate-float-delayed absolute bottom-0 left-2 h-[46%] w-[45%] rounded-3xl border-4 border-neutral-50 object-cover shadow-card dark:border-neutral-950"
             loading="lazy"

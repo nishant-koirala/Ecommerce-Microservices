@@ -93,7 +93,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         if ("GET".equals(method)) {
             return PATH_MATCHER.match("/api/v1/products/**", path)
-                    || PATH_MATCHER.match("/api/v1/reviews/**", path);
+                    || PATH_MATCHER.match("/api/v1/reviews/**", path)
+                    // Category listing is public (exact path only — writes stay admin-gated).
+                    || PATH_MATCHER.match("/api/v1/categories", path);
         }
         return false;
     }

@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, forkJoin, map, switchMap, take } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, take } from 'rxjs';
 
 import { CategoryResponse, ProductRequest, ProductResponse } from '../../core/models/product';
 import { InventoryResponse } from '../../core/models/inventory';
@@ -380,9 +380,18 @@ export class ProductsAdminComponent implements OnInit {
     }
     this.confirmingDelete.set(null);
     this.deleteBusy.set(product.id);
-    this.productService
-      .remove(product.id)
-      .pipe(takeUntilDestroyed(this.destroyRef), take(1))
+    // Delete the inventory row first (when present) so deleting a product
+    // doesn't leave an orphaned inventory record.
+    const inventory = this.stock()[product.id];
+    const deleteInventory$: Observable<void> = inventory
+      ? this.inventoryService.deleteByProduct(product.id)
+      : of(undefined);
+    deleteInventory$
+      .pipe(
+        switchMap(() => this.productService.remove(product.id)),
+        takeUntilDestroyed(this.destroyRef),
+        take(1),
+      )
       .subscribe({
         next: () => {
           this.deleteBusy.set(null);

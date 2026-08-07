@@ -33,4 +33,9 @@ export class InventoryService {
       quantity,
     });
   }
+
+  /** ADMIN only — delete the inventory row for a product (called before product delete). */
+  deleteByProduct(productId: number): Observable<void> {
+    return this.http.delete<void>(`${API}/inventory/product/${productId}`);
+  }
 }
