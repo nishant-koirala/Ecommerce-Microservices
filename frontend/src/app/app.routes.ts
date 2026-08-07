@@ -33,5 +33,32 @@ export const routes: Routes = [
     path: 'admin',
     loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'about',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.aboutRoutes),
+  },
+  {
+    path: 'contact',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.contactRoutes),
+  },
+  {
+    path: 'faq',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.faqRoutes),
+  },
+  {
+    path: 'shipping-returns',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.shippingReturnsRoutes),
+  },
+  {
+    path: 'terms',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.termsRoutes),
+  },
+  {
+    path: 'privacy',
+    loadChildren: () => import('./features/pages/pages.routes').then((m) => m.privacyRoutes),
+  },
+  {
+    path: '**',
+    loadChildren: () => import('./features/not-found/not-found.routes').then((m) => m.notFoundRoutes),
+  },
 ];

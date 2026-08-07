@@ -3,14 +3,15 @@ import { RouterLink } from '@angular/router';
 
 import { CategoryResponse } from '../../../../core/models/product';
 import { ImageService } from '../../../../core/services/image.service';
+import { RevealDirective } from '../../../../shared/directives/reveal.directive';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [RouterLink, SkeletonComponent],
+  imports: [RouterLink, RevealDirective, SkeletonComponent],
   template: `
-    <section id="categories" class="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
+    <section id="categories" appReveal class="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
       <div class="mb-8 flex items-end justify-between gap-4">
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400">

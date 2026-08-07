@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -14,10 +14,12 @@ import { WishlistService } from '../../../core/services/wishlist.service';
   imports: [RouterLink],
   template: `
     <header
-      class="sticky top-0 z-40 border-b border-neutral-200/70 bg-neutral-50/85 backdrop-blur-md dark:border-neutral-800/70 dark:bg-neutral-950/85"
+      class="sticky top-0 z-40 border-b border-neutral-200/70 bg-neutral-50/85 backdrop-blur-md transition-shadow duration-200 dark:border-neutral-800/70 dark:bg-neutral-950/85"
+      [class.shadow-sm]="scrolled()"
     >
       <nav
-        class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+        class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 transition-[height] duration-200 sm:px-6 lg:px-8"
+        [class.h-14]="scrolled()"
         aria-label="Main navigation"
       >
         <a routerLink="/" class="flex shrink-0 items-center gap-2" aria-label="Atelier home">
@@ -352,6 +354,17 @@ export class NavbarComponent {
 
   protected readonly mobileOpen = signal(false);
   protected readonly menuOpen = signal(false);
+  protected readonly scrolled = signal(false);
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    if (this.platform.isBrowser) {
+      const onScroll = () => this.scrolled.set(window.scrollY > 48);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+      this.destroyRef.onDestroy(() => window.removeEventListener('scroll', onScroll));
+    }
+  }
 
   private readonly unreadEffect = effect(() => {
     const user = this.auth.currentUser();

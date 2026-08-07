@@ -76,3 +76,95 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Motion                                                              */
+/*  All entrance/ambient animation lives behind a                      */
+/*  `prefers-reduced-motion: no-preference` guard so users who ask for  */
+/*  reduced motion get a static, fully-visible page. Transitions are   */
+/*  kept within 150–400ms.                                              */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Scroll reveal — paired with the appReveal directive. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  .reveal.reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.4s ease,
+      transform 0.4s ease;
+  }
+
+  /* Hero entrance: fade + slight upward slide, staggered via delay. */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-rise {
+    animation: rise-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Hero photos: gentle idle float (deliberate, not decorative). */
+  @keyframes float-slow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float-slow 7s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-slow 9s ease-in-out infinite;
+    animation-delay: -2.5s;
+  }
+
+  /* Small success pop (newsletter checkmark, etc.). */
+  @keyframes pop-in {
+    from {
+      transform: scale(0.85);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-pop {
+    animation: pop-in 0.2s ease both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .animate-rise,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-pop {
+    animation: none;
+  }
+}

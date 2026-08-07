@@ -45,17 +45,22 @@ import { RouterLink } from '@angular/router';
         <div>
           <h3 class="text-sm font-semibold uppercase tracking-wider text-neutral-900 dark:text-neutral-100">Support</h3>
           <ul class="mt-4 space-y-2.5 text-sm text-neutral-500 dark:text-neutral-400">
-            <li><a href="#" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Shipping & returns</a></li>
-            <li><a href="#" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">FAQ</a></li>
-            <li><a href="#" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Contact</a></li>
+            <li><a routerLink="/shipping-returns" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Shipping & returns</a></li>
+            <li><a routerLink="/faq" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">FAQ</a></li>
+            <li><a routerLink="/contact" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Contact</a></li>
+            <li><a routerLink="/about" class="transition-colors hover:text-primary-700 dark:hover:text-primary-300">Our story</a></li>
           </ul>
         </div>
       </div>
 
       <div class="border-t border-neutral-200 py-6 dark:border-neutral-800">
-        <p class="mx-auto max-w-7xl px-4 text-center text-xs text-neutral-400 dark:text-neutral-500 sm:px-6 lg:px-8">
-          &copy; {{ year }} Atelier. All rights reserved.
-        </p>
+        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 text-xs text-neutral-400 dark:text-neutral-500 sm:flex-row sm:px-6 lg:px-8">
+          <p>&copy; {{ year }} Atelier. All rights reserved.</p>
+          <nav class="flex items-center gap-4" aria-label="Legal">
+            <a routerLink="/terms" class="transition-colors hover:text-neutral-900 dark:hover:text-neutral-200">Terms</a>
+            <a routerLink="/privacy" class="transition-colors hover:text-neutral-900 dark:hover:text-neutral-200">Privacy</a>
+          </nav>
+        </div>
       </div>
     </footer>
   `,

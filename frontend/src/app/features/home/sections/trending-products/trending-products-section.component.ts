@@ -4,14 +4,15 @@ import { RouterLink } from '@angular/router';
 import { ProductResponse } from '../../../../core/models/product';
 import { LinkButtonComponent } from '../../../../shared/components/button/link-button.component';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
+import { RevealDirective } from '../../../../shared/directives/reveal.directive';
 import { SkeletonComponent } from '../../../../shared/components/skeleton/skeleton.component';
 
 @Component({
   selector: 'app-trending-products',
   standalone: true,
-  imports: [RouterLink, ProductCardComponent, SkeletonComponent, LinkButtonComponent],
+  imports: [RouterLink, ProductCardComponent, SkeletonComponent, LinkButtonComponent, RevealDirective],
   template: `
-    <section id="trending" class="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
+    <section id="trending" appReveal class="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6 lg:px-8">
       <div class="mb-8 flex items-end justify-between gap-4">
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400">

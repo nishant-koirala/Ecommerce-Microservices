@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 
+import { RevealDirective } from '../../../../shared/directives/reveal.directive';
 import { RatingStarsComponent } from '../../../../shared/components/rating-stars/rating-stars.component';
 
 interface Testimonial {
@@ -12,9 +13,9 @@ interface Testimonial {
 @Component({
   selector: 'app-testimonials',
   standalone: true,
-  imports: [RatingStarsComponent],
+  imports: [RevealDirective, RatingStarsComponent],
   template: `
-    <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <section appReveal class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div class="mb-10 text-center">
         <p class="text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400">
           From our customers

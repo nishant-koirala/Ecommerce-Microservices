@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 
 import { LinkButtonComponent } from '../../../../shared/components/button/link-button.component';
+import { RevealDirective } from '../../../../shared/directives/reveal.directive';
 
 @Component({
   selector: 'app-promo-banner',
   standalone: true,
-  imports: [LinkButtonComponent],
+  imports: [LinkButtonComponent, RevealDirective],
   template: `
-    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <section appReveal class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div
         class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary-800 via-primary-900 to-neutral-950 px-6 py-14 text-center sm:px-12 lg:py-20"
       >
